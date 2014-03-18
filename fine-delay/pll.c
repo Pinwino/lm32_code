@@ -18,7 +18,7 @@
 #include <errno.h>
 #include <pp-printf.h>
 
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+//#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 #define jiffies timer_get_tics
 #define HZ 100
