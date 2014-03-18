@@ -1,22 +1,106 @@
 #include <stdio.h>
 #include <inttypes.h>
-
+#include <stdlib.h>
 #include <stdarg.h>
 
 #include <wrc.h>
 #include <w1.h>
 #include "uart.h"
 #include "eeprom.h"
+#include "fine-delay.h"
 #include "hw/fd_channel_regs.h"
 #include "hw/fd_main_regs.h"
+#include "syscon.h"
 #include <pp-printf.h>
+#include "errno.h"
 #define mprintf pp_printf
 #define vprintf pp_vprintf
 #define sprintf pp_sprintf
+#define jiffies (unsigned long) timer_get_tics
+#define HZ 100
 
-extern unsigned char *BASE_UART;
-extern unsigned char *BASE_FINE_DELAY;
 
+struct fd_dev fd;
+
+/* ************************************************************* */
+			/* ESTO HAY QUE QUITAAAAAAAAAALO */
+static struct fd_calibration fd_calib_default = {
+	.magic = 0xf19ede1a,
+	.version = 3,
+	.date = 0x20130427,
+	.frr_poly = { -165202LL, -29825595LL, 3801939743082LL },
+	.zero_offset = { -38186, -38155, -38147, -38362 },
+	.tdc_zero_offset = 127500,
+	.vcxo_default_tune = 41711,
+};
+/* ************************************************************* */			
+/* ************** RESET FUNCTION FOR FD ************** */
+static void fd_do_reset(struct fd_dev *fd, int hw_reset)
+{
+	if (hw_reset) {
+		fd_writel(fd, FD_RSTR_LOCK_W(0xdead) | FD_RSTR_RST_CORE_MASK,
+		       FD_REG_RSTR);
+		mprintf("\t\tDir %08X val %08X\n", FD_RSTR_LOCK_W(0xdead) | FD_RSTR_RST_FMC_MASK, FD_REG_RSTR);
+
+		fd_writel(fd, FD_RSTR_LOCK_W(0xdead) | FD_RSTR_RST_CORE_MASK
+		       | FD_RSTR_RST_FMC_MASK, FD_REG_RSTR);
+		/* TPS3307 supervisor needs time to de-assert master reset */
+		mprintf("\t\tDir %08X val %08X\n", FD_RSTR_LOCK_W(0xdead) | FD_RSTR_RST_CORE_MASK
+		       | FD_RSTR_RST_FMC_MASK, FD_REG_RSTR);
+		return;
+	}
+
+	fd_writel(fd, FD_RSTR_LOCK_W(0xdead) | FD_RSTR_RST_FMC_MASK,
+		  FD_REG_RSTR);
+	mprintf("\t\tDir %08X val %08X\n", FD_RSTR_LOCK_W(0xdead) | FD_RSTR_RST_FMC_MASK, FD_REG_RSTR);
+
+	usleep(1000);//udelay(1000);
+	fd_writel(fd, FD_RSTR_LOCK_W(0xdead) | FD_RSTR_RST_FMC_MASK
+	       | FD_RSTR_RST_CORE_MASK, FD_REG_RSTR);
+	mprintf("\t\tDir %08X val %08X\n", FD_RSTR_LOCK_W(0xdead) | FD_RSTR_RST_FMC_MASK, FD_REG_RSTR);
+
+	//udelay(1000);
+	
+
+}
+/* *************************************************** */
+
+/* ************** RESET FUNCTION FOR FD ************** */
+/*int fd_reset_again(struct fd_dev *fd)
+{
+	unsigned long j;
+
+	mprintf("********** Reset again ***********\n");
+	/* Reset the FD core once we have proper reference/TDC clocks 
+	d_do_reset(fd, 0 /* not hw );
+
+	/*j = jiffies + 2 * HZ;
+	while (time_before(jiffies, j)) {
+		if (fd_readl(fd, FD_REG_GCR) & FD_GCR_DDR_LOCKED)
+			break;
+		msleep(10);
+	}
+	if (time_after_eq(jiffies, j)) {
+		mprintf("%s: timeout waiting for GCR lock bit\n", __func__);
+	}
+
+	fd_do_reset(fd, 0 /* not hw );
+	//return 0;
+}
+/* *************************************************** */
+
+int fd_gpio_defaults(struct fd_dev *fd)
+{
+	fd_gpio_dir(fd, FD_GPIO_TRIG_INTERNAL, FD_GPIO_OUT);
+	fd_gpio_set(fd, FD_GPIO_TRIG_INTERNAL);
+
+	fd_gpio_set(fd, FD_GPIO_OUTPUT_MASK);
+	fd_gpio_dir(fd, FD_GPIO_OUTPUT_MASK, FD_GPIO_OUT);
+
+	fd_gpio_dir(fd, FD_GPIO_TERM_EN, FD_GPIO_OUT);
+	fd_gpio_clr(fd, FD_GPIO_TERM_EN);
+	return 0;
+}
  
 int main(void)
 {
@@ -33,16 +117,110 @@ int main(void)
 	sdb_find_devices();
 	uart_init_sw();
 	uart_init_hw();
+	
+	//fd->fd_regs_base =atoi(BASE_FINE_DELAY);		/* sdb_find_device(cern, f19ede1a) */
+	fd.fd_regs_base = BASE_FINE_DELAY;
+	fd.fd_owregs_base= fd.fd_regs_base + 0x500;		/* regs_base + 0x500 */
+	fd.calib = fd_calib_default;
+	//int fd_vic_base;		/* sdb_find_device(cern, 00000013) */
+	
 
-	for (i=0; i<10000000; i++)
-		__asm__("nop\n");
+	/*for (i=0; i<10000000; i++)
+		__asm__("nop\n");*/
+
+	usleep(5000);
 
 	mprintf("\n\n**********************************************************\n");
-	mprintf("LM32 UART: starting up...\n\n");
-	mprintf("Uart base adress %08X\n", BASE_UART);
-	mprintf("Finde Dalay base adress %08X\n\n", BASE_FINE_DELAY);
+	mprintf("LM32 UART: starting up...\n");
+	mprintf("\tUart base adress %08X\n", BASE_UART);
+	mprintf("\tFinde Dalay base adress %08X\n\n", fd.fd_regs_base);
+
+	/*sel= strtol(BASE_FINE_DELAY, sizeof(*BASE_FINE_DELAY)/sizeof(*BASE_FINE_DELAY[0]), 16);
+	mprintf("-->Whitout * %08X\n", sel);*/
+
+	mprintf("FD starting initilization...\n");
+	mprintf("\tFD Core Reset\n");
+	//fd_do_reset(&fd, 1);
+	dir=0x80000;
+	*dir= 0xdead0002;
+	usleep(1000);
+	*dir= 0xdead0003;
+	mprintf("\tFD Core Reset Done\n\n");
 	
-	dir=BASE_FINE_DELAY + FD_REG_RSTR;
-	*dir=0xdead0003;
+	/*for(i=0; i<=3; i++){
+		j=fd_readl(&fd, (port_registers[4] + port_base_adress[1]) )+i;
+		mprintf("val %08X\n", j);
+		fd_writel(&fd, j, (port_registers[4] + port_base_adress[1]));
+	}*/
+	
+	/*mprintf("\tInit SPI\n");
+		fd_spi_init(&fd);
+	mprintf("\tSPI initialized\n\n");
+	
+	mprintf("\tInit GPIO\n");
+		fd_gpio_init(&fd);
+	mprintf("\tGPIO initialized\n\n");
+		
+
+	/*mprintf("\tInit PLL\n");
+		fd_pll_init(&fd);
+	mprintf("\tPLL initialized\n\n");
+	
+	mprintf("\tInit gpio-default\n");
+		fd_gpio_defaults(&fd);
+	mprintf("\tgpio-default initialized\n\n");
+	
+	dir=FD_REG_TCR;
+	mprintf("TCR : %08x\n", *dir);
+	*dir=0x2;
+	mprintf("TCR : %08x\n", *dir);
+	usleep(100000);
+	dir=FD_REG_TM_CYCLES;
+	mprintf("TM_CYCLES : %08x\n", *dir);
+	dir=FD_REG_TM_SECL;
+	mprintf("TM_SECL : %08x\n", *dir);*/
+	
+	/************ SUBSYS(onewire) **************/
+	
+	mprintf("\tInit OneWire\n");
+		fd_onewire_init (&fd);
+		//w1_read_temp()
+	mprintf("\tOneWire initialized\n");
+	
+	
+	
+	//mprintf("\tReset Again\n");
+	/*fd_do_reset(&fd, 1);
+	dir=0x80000;
+	*dir= 0xdead0001;
+	usleep(1000);
+	*dir= 0xdead0003;
+	usleep(1000);
+	*dir= 0xdead0001;
+	usleep(1000);
+	*dir= 0xdead0003;
+	usleep(1000);
+	dir=0x80008;
+	*dir=0x00000001;
+	usleep(1000);
+	mprintf("\tFD Reset Again Done\n\n");
+	
+	mprintf("\tSet all output enable stages...\n");
+	//set all output enable stages 
+	for (ch = 1; ch <= FD_CH_NUMBER; ch++)
+		fd_gpio_set(&fd, ch);
+	mprintf("\tSet all output enable stages\n\n");
+	
+	//mprintf("Starting port programming..\n");
+	dir=FD_REG_TCR;
+	mprintf("TCR : %08x\n", *dir);
+	*dir=0x2;
+	mprintf("TCR : %08x\n", *dir);
+	usleep(100000);
+	dir=FD_REG_TM_CYCLES;
+	mprintf("TM_CYCLES : %08x\n", *dir);
+	dir=FD_REG_TM_SECL;
+	mprintf("TM_SECL : %08x\n", *dir);
+	*/
 }
 

@@ -17,7 +17,11 @@ PTP_NOPOSIX = ptp-noposix
 PPSI = ppsi
 
 # we miss CONFIG_ARCH_LM32 as we have no other archs by now
+<<<<<<< Updated upstream
 obj-y = arch/lm32/crt0.o arch/lm32/irq.o fine-delay/spi.o fine-delay/gpio.o fine-delay/pll.o fine-delay/onewire.o fine-delay/calibrate.o fine-delay/acam.o
+=======
+obj-y = arch/lm32/crt0.o arch/lm32/irq.o fine-delay/spi.o fine-delay/gpio.o fine-delay/pll.o fine-delay/onewire.o
+>>>>>>> Stashed changes
 LDS-$(CONFIG_WR_NODE)   = arch/lm32/ram.ld
 LDS-$(CONFIG_WR_SWITCH) = arch/lm32/ram-wrs.ld
 
