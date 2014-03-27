@@ -28,15 +28,16 @@
 
 OUTPUT_FORMAT("elf32-lm32")
 ENTRY(_start)
+_HEAP_SIZE =  2480;
 
 MEMORY
 {
     ram :
 	ORIGIN = 0x00040000,
-	LENGTH = CONFIG_RAMSIZE - CONFIG_STACKSIZE
+	LENGTH = CONFIG_RAMSIZE + 2048,
     stack :
-	ORIGIN = 0x00040000 + CONFIG_RAMSIZE - CONFIG_STACKSIZE,
-	LENGTH = CONFIG_STACKSIZE
+	ORIGIN = 0x00040000 + CONFIG_RAMSIZE + 2048,
+	LENGTH = 22528
 }
 
 SECTIONS
@@ -58,10 +59,18 @@ SECTIONS
 		*(COMMON)
 		_ebss = .;
 	} > ram
+	
+	.heap : {
+		. = ALIGN(8);
+		_heap = .;
+		_HEAP_START = .;
+		. += _HEAP_SIZE;
+		_HEAP_END = .;
+	} > ram
 
 	/* End of RAM for checking stack overflows */
 	PROVIDE(_endram = ORIGIN(stack));
-
+	
 	/* First location in stack is highest address in STACK */
 	PROVIDE(_fstack = ORIGIN(stack) + LENGTH(stack) - 4);
 }
