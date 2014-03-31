@@ -28,7 +28,8 @@
 
 OUTPUT_FORMAT("elf32-lm32")
 ENTRY(_start)
-_HEAP_SIZE =  2480;
+_HEAP_SIZE =  4096;
+aling = 4;
 
 MEMORY
 {
@@ -61,12 +62,12 @@ SECTIONS
 	} > ram
 	
 	.heap : {
-		. = ALIGN(8);
+		. = ALIGN(aling);
 		_heap = .;
 		_HEAP_START = .;
 		. += _HEAP_SIZE;
 		_HEAP_END = .;
-	} > ram
+	} >	ram
 
 	/* End of RAM for checking stack overflows */
 	PROVIDE(_endram = ORIGIN(stack));
