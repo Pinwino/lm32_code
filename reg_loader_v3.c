@@ -102,6 +102,41 @@ int fd_gpio_defaults(struct fd_dev *fd)
 	return 0;
 }
  
+ 
+ uint64_t div_u64_rem(uint64_t n, uint32_t base, uint32_t *remainder){
+	uint64_t rem = n;
+	uint64_t b = base;
+	uint64_t res, d = 1;
+	uint32_t high = rem >> 32;
+	
+	/* Reduce the thing a bit first */
+	res = 0;
+	if (high >= base) {
+		high /= base;
+		res = (uint64_t) high << 32;
+		rem -= (uint64_t) (high*base) << 32;
+	}
+	
+	while ((int64_t)b > 0 && b < rem) {
+		b = b+b;
+		d = d+d;
+	}
+	
+	do {
+		if (rem >= b) {
+			rem -= b;
+			res += d;
+		}
+		
+		b >>= 1;
+		d >>= 1;
+	} while (d);
+	
+	*remainder = rem;
+		
+	return res;
+}
+ 
 int main(void)
 {
 	const unsigned int main_registers[] = {FD_REG_TM_SECH, FD_REG_TM_SECL, FD_REG_TM_CYCLES};
@@ -112,6 +147,12 @@ int main(void)
 	const unsigned int pps_vals[]	= {0x0, 0x0, 0x0, 0xbebc21, 0x760, 0x0, 0x0, 0xbebc27, 0xb60, 0x1, 0x0, 0x000, 0x10000};
 	const unsigned int XMhz_vals[]	= {0x0, 0x0, 0x0, 0xbebc1b, 0x34a, 0x0, 0x0, 0xbebc21, 0x74a, 0x0, 0x6, 0x400, 0x10000};
 	const unsigned int crtl []		= {0x81, 0x92, 0x83, 0x87};
+	
+	uint64_t dividend[] = {15, 650};//, 759, 102569882369, 965448635497712};
+	uint64_t *quat;
+	uint32_t divisor = 2, rem;
+	
+	
 	
 	int i, j, *dir, *ind, sel, ch;
 	sdb_find_devices();
@@ -128,12 +169,18 @@ int main(void)
 	/*for (i=0; i<10000000; i++)
 		__asm__("nop\n");*/
 
-	usleep(5000);
+	//usleep(5000);
 
 	mprintf("\n\n**********************************************************\n");
 	mprintf("LM32 UART: starting up...\n");
 	mprintf("\tUart base adress %08X\n", BASE_UART);
 	mprintf("\tFinde Dalay base adress %08X\n\n", fd.fd_regs_base);
+	
+	/*mprintf("MALLOC\n");
+	ind = malloc(sizeof(int));
+	mprintf("&ind = %08x, *ind = %08x, ind=%08x\n", &ind, *ind, ind);
+	free(ind);*/
+	
 
 	/*sel= strtol(BASE_FINE_DELAY, sizeof(*BASE_FINE_DELAY)/sizeof(*BASE_FINE_DELAY[0]), 16);
 	mprintf("-->Whitout * %08X\n", sel);*/
@@ -147,13 +194,20 @@ int main(void)
 	*dir= 0xdead0003;
 	mprintf("\tFD Core Reset Done\n\n");
 	
+	/*for(i=0; i<(sizeof(dividend)/sizeof(dividend[0])); i++){
+		mprintf("Divide %08x by %lu \n", dividend[i], divisor);
+		quat= div_u64_rem(dividend[i], divisor, &rem);
+		mprintf("Reaminder %08x quatotient %lu \n", rem, quat);
+	}*/
+	
+	
 	/*for(i=0; i<=3; i++){
 		j=fd_readl(&fd, (port_registers[4] + port_base_adress[1]) )+i;
 		mprintf("val %08X\n", j);
 		fd_writel(&fd, j, (port_registers[4] + port_base_adress[1]));
 	}*/
 	
-	/*mprintf("\tInit SPI\n");
+	mprintf("\tInit SPI\n");
 		fd_spi_init(&fd);
 	mprintf("\tSPI initialized\n\n");
 	
@@ -162,35 +216,21 @@ int main(void)
 	mprintf("\tGPIO initialized\n\n");
 		
 
-	/*mprintf("\tInit PLL\n");
+	mprintf("\tInit PLL\n");
 		fd_pll_init(&fd);
 	mprintf("\tPLL initialized\n\n");
-	
-	mprintf("\tInit gpio-default\n");
-		fd_gpio_defaults(&fd);
-	mprintf("\tgpio-default initialized\n\n");
-	
-	dir=FD_REG_TCR;
-	mprintf("TCR : %08x\n", *dir);
-	*dir=0x2;
-	mprintf("TCR : %08x\n", *dir);
-	usleep(100000);
-	dir=FD_REG_TM_CYCLES;
-	mprintf("TM_CYCLES : %08x\n", *dir);
-	dir=FD_REG_TM_SECL;
-	mprintf("TM_SECL : %08x\n", *dir);*/
-	
-	/************ SUBSYS(onewire) **************/
 	
 	mprintf("\tInit OneWire\n");
 		fd_onewire_init (&fd);
 		//w1_read_temp()
 	mprintf("\tOneWire initialized\n");
 	
+	mprintf("\tInit gpio-default\n");
+		fd_gpio_defaults(&fd);
+	mprintf("\tgpio-default initialized\n\n");
 	
-	
-	//mprintf("\tReset Again\n");
-	/*fd_do_reset(&fd, 1);
+	mprintf("\tReset Again\n");
+	/*fd_do_reset(&fd, 1);*/
 	dir=0x80000;
 	*dir= 0xdead0001;
 	usleep(1000);
@@ -205,22 +245,66 @@ int main(void)
 	usleep(1000);
 	mprintf("\tFD Reset Again Done\n\n");
 	
+	mprintf("\tInit ACAM\n");
+		fd_acam_init(&fd);
+	mprintf("\tACAM initialized\n");
+	
+	mprintf("\tInit TIMER\n");
+		fd_time_init(&fd);
+	mprintf("\tTIMER initialized\n");
+	
+	mprintf("\tInit I2C\n");
+		fd_i2c_init(&fd);
+	mprintf("\I2C initialized\n");
+	
+	
 	mprintf("\tSet all output enable stages...\n");
 	//set all output enable stages 
-	for (ch = 1; ch <= FD_CH_NUMBER; ch++)
-		fd_gpio_set(&fd, ch);
-	mprintf("\tSet all output enable stages\n\n");
+	for (ch = 1; ch <= FD_CH_NUMBER; ch++){
+		mprintf("\t\tEnable channel %d\n", ch);
+		fd_gpio_set(&fd, FD_GPIO_OUTPUT_EN(ch));
+		}
+	mprintf("\tSet all output enable stages\n\n");	
 	
-	//mprintf("Starting port programming..\n");
-	dir=FD_REG_TCR;
-	mprintf("TCR : %08x\n", *dir);
-	*dir=0x2;
-	mprintf("TCR : %08x\n", *dir);
-	usleep(100000);
-	dir=FD_REG_TM_CYCLES;
-	mprintf("TM_CYCLES : %08x\n", *dir);
-	dir=FD_REG_TM_SECL;
-	mprintf("TM_SECL : %08x\n", *dir);
-	*/
+	
+	mprintf("Starting port programming\n");
+	ind=pps_vals;	
+	for (j=0; j<ARRAY_SIZE(port_base_adress); j++){
+		mprintf("\tChannel base adress %08X\n", port_base_adress[j]);
+		for (i=0x0; i<(sizeof(port_registers)/sizeof(port_registers[0])); i++)
+		{			
+				dir = BASE_FINE_DELAY + port_base_adress[j] + port_registers[i];
+				*dir = *(ind+i);
+				
+				mprintf("\t\tIter %d Dir %08X val %08X\n", i, dir, *dir);
+		}
+		
+		ind=XMhz_vals;
+	}
+		
+
+for (j=0; j<ARRAY_SIZE(port_base_adress); j++)
+	{
+		mprintf("\tUpdating base %08X\n", port_base_adress[j]);	
+		for(i=0; i<sizeof(crtl)/sizeof(crtl[0]); i++)
+		{
+			dir = BASE_FINE_DELAY + port_base_adress[j];
+			*dir = crtl[i];
+			mprintf("\t\tIter %d Dir %08X val %08X\n", i, dir, *dir);
+		}
+	}
+	
+	
+	mprintf("\tUpdating time registers\n");
+	for (i=0x0; i<(sizeof(main_registers)/sizeof(main_registers[0])); i++){
+		dir=BASE_FINE_DELAY + main_registers[i];
+		*dir=0x0;
+		mprintf("\t\tIter %d Dir %08X val %08X\n", i, dir, *dir);
+	}
+	
+	mprintf("\tUpdating control-time register\n");
+	dir=BASE_FINE_DELAY + FD_REG_TCR;
+	*dir=0x89;
+	mprintf("\t\tIter %d Dir %08X val %08X\n", i, dir, *dir);
 }
 
