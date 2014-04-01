@@ -16,13 +16,18 @@
 //#include <linux/io.h>
 //#include <linux/delay.h>
 //#include <linux/math64.h>
+#include "stdio.h"
+#include "stdlib.h"
 #include "fine-delay.h"
 #include "hw/fd_main_regs.h"
 #include "hw/acam_gpx.h"
 #include "hw/fd_channel_regs.h"
 #include "errno.h"
+#include "syscon.h"
 
 #define printk mprintf
+#define msleep timer_delay
+//#define udelay(1) timer_delay(0.001)
 
 /* This is the same as in ./acam.c: use only at init time */
 static void acam_set_bypass(struct fd_dev *fd, int on)
@@ -75,13 +80,17 @@ static uint64_t output_delay_ps(struct fd_dev *fd, int ch, int fine, int n,
 	if (!results)
 		return -ENOMEM;
 
+	printk("Disable the output for the channel being calibrated\n");
 	/* Disable the output for the channel being calibrated */
 	fd_gpio_clr(fd, FD_GPIO_OUTPUT_EN(FD_CH_EXT(ch)));
 
+	printk("Enable the stop input in ACAM for the channel being calibrated\n");
 	/* Enable the stop input in ACAM for the channel being calibrated */
 	acam_writel(fd, AR0_TRiseEn(0) | AR0_TRiseEn(FD_CH_EXT(ch))
+	
 		    | AR0_HQSel | AR0_ROsc, 0);
 
+	printk("Program the output delay line setpoint");
 	/* Program the output delay line setpoint */
 	fd_ch_writel(fd, ch, fine, FD_REG_FRR);
 	fd_ch_writel(fd, ch, FD_DCR_ENABLE | FD_DCR_MODE | FD_DCR_UPDATE,
@@ -95,18 +104,21 @@ static uint64_t output_delay_ps(struct fd_dev *fd, int ch, int fine, int n,
 	 * the accuracy of calibration measurements
 	 */
 	fd_writel(fd, FD_CALR_PSEL_W(1 << ch), FD_REG_CALR);
-	udelay(1);
+	//udelay(1);
+	timer_delay(0.001);
 
 	/* Do n_avgs single measurements and average */
 	for (i = 0; i < n; i++) {
 		uint32_t fr;
 		/* Re-arm the ACAM (it's working in a single-shot mode) */
 		fd_writel(fd, FD_TDCSR_ALUTRIG, FD_REG_TDCSR);
-		udelay(1);
+		//udelay(1);
+		timer_delay(0.001);
 		/* Produce a calib pulse on the TDC start and the output ch */
 		fd_writel(fd, FD_CALR_CAL_PULSE |
 			  FD_CALR_PSEL_W(1 << ch), FD_REG_CALR);
-		udelay(1);
+		//udelay(1);
+		timer_delay(0.001);
 		/* read the tag, convert to picoseconds (fixed point: 16.16) */
 		fr = acam_readl(fd, 8 /* fifo */) & 0x1ffff;
 
@@ -175,7 +187,7 @@ static int fd_find_8ns_tap(struct fd_dev *fd, int ch)
 			__pr_fixed("avg ", stats.avg - bias, ", ");
 			__pr_fixed("max ", stats.max - bias, "\n");
 		}*/
-
+		
 		if(dly < 8000 << 16)
 			l = mid;
 		else
@@ -195,6 +207,8 @@ int fd_calibrate_outputs(struct fd_dev *fd)
 
 	if ((ret = acam_test_delay_transfer_function(fd)) < 0)
 		return ret;
+		
+	mprintf("ret not returned\n");
 
 	fd_read_temp(fd, 0);
 	fitted = fd_eval_polynomial(fd);
