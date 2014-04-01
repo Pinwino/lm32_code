@@ -7,6 +7,8 @@
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
+#include <errno.h>
+
 extern unsigned char *BASE_FINE_DELAY;
 extern unsigned char *BASE_UART;
 
@@ -158,7 +160,7 @@ struct fd_calibration { /* All of these are big endian */
 #define FD_CH_EXT(i)	((i) + 1)
 
 #define FD_NUM_TAPS	1024	/* This is an hardware feature of SY89295U */
-#define FD_CAL_STEPS	1024	/* This is a parameter: must be power of 2 */
+#define FD_CAL_STEPS	24	/* This is a parameter: must be power of 2 */
 #define FD_SW_FIFO_LEN	1024	/* Again, aa parameter: must be a power of 2 */
 
 struct fd_ch {
