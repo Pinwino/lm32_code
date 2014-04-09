@@ -28,7 +28,7 @@
 
 OUTPUT_FORMAT("elf32-lm32")
 ENTRY(_start)
-_HEAP_SIZE =  4096;
+_HEAP_SIZE =  12288+64;
 aling = 4;
 
 MEMORY
