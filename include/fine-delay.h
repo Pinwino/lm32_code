@@ -7,6 +7,8 @@
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
+#include "fmc-bus_abstraction_layer.h"
+#include "spec-sw_abstraction_layer.h"
 #include <errno.h>
 
 extern unsigned char *BASE_FINE_DELAY;
@@ -192,7 +194,7 @@ struct fd_dev {
 	unsigned char * fd_regs_base;		/* sdb_find_device(cern, f19ede1a) */
 	unsigned char * fd_owregs_base;		/* regs_base + 0x500 */
 	//int fd_vic_base;		/* sdb_find_device(cern, 00000013) */
-	unsigned int *fmc; //Wrong type, made only for coherence
+	struct fmc_device *fmc; //Wrong type, made only for coherence
 	//struct zio_device *zdev, *hwzdev;
 	//struct timer_list fifo_timer;
 	//struct timer_list temp_timer;
@@ -239,27 +241,19 @@ static inline void fd_split_pico(uint64_t pico,
 	//*frac = (*frac << 12) / 8000;
 }
 
-static inline uint32_t fmc_readl(struct fmc_device *fmc, int offset)
+/*static inline uint32_t fmc_readl(struct fmc_device *fmc, int offset)
 {
 	uint32_t *p= (uint32_t) offset;
 	if (offset >= 0x180500 && offset < 0x190000)
 		mprintf("[READ ]: fmc_readl -> Dir %08X val %08X\n", p, *p);
 	return *p;
-	/*if (unlikely(fmc->op->read32))
-		return fmc->op->read32(fmc, offset);
-	return readl(fmc->fpga_base + offset);*/
+
 }
 static inline void fmc_writel(struct fmc_device *fmc, uint32_t val, int off)
 {
 	uint32_t *p = (uint32_t) off;
 	*p = val;
-	//if (off >= 0x80500 && off < 0x90000)
-		//mprintf("[WRITE]: fmc_writel -> Adr %08X val %08X\n", off, val);
-	/*if (unlikely(fmc->op->write32))
-		fmc->op->write32(fmc, val, off);
-	else
-		writel(val, fmc->fpga_base + off);*/
-}
+}*/
 
 static inline uint32_t fd_readl(struct fd_dev *fd, unsigned long reg)
 {
@@ -421,10 +415,13 @@ extern void fd_spec_exit(void);
 /* Functions exported by i2c.c */
 extern int fd_i2c_init(struct fd_dev *fd);
 extern void fd_i2c_exit(struct fd_dev *fd);
+extern int fd_read_calibration_eeprom(struct fmc_device *fmc,
+				      struct fd_calibration *calib);
 extern int fd_eeprom_read(struct fd_dev *fd, int i2c_addr, uint32_t offset,
 			 void *buf, size_t size);
 extern int fd_eeprom_write(struct fd_dev *fd, int i2c_addr, uint32_t offset,
 			void *buf, size_t size);
+extern void dumpstruct(char *name, void *ptr, int size);
 
 /* Function exported by calibration.c */
 int fd_handle_eeprom_calibration(struct fd_dev *fd);
