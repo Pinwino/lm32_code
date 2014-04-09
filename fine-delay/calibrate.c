@@ -90,7 +90,7 @@ static uint64_t output_delay_ps(struct fd_dev *fd, int ch, int fine, int n,
 	
 		    | AR0_HQSel | AR0_ROsc, 0);
 
-	printk("Program the output delay line setpoint");
+	printk("Program the output delay line setpoint\n");
 	/* Program the output delay line setpoint */
 	fd_ch_writel(fd, ch, fine, FD_REG_FRR);
 	fd_ch_writel(fd, ch, FD_DCR_ENABLE | FD_DCR_MODE | FD_DCR_UPDATE,
