@@ -26,7 +26,17 @@ struct fd_dev fd;
 struct fmc_device fmc_loc;
 
 	
-/* ************** RESET FUNCTION FOR FD ************** */
+extern uint32_t _endram;
+extern uint32_t _fstack;
+#define ENDRAM_MAGIC 0xbadc0ffe
+
+static void check_stack(void)
+{
+	while (_endram != ENDRAM_MAGIC) {
+		mprintf("Stack overflow!\n");
+		timer_delay_ms(1000);
+	}
+}
 
 /* The reset function (by Tomasz) */
 static void fd_do_reset(struct fd_dev *fd, int hw_reset)
@@ -148,16 +158,20 @@ int main(void)
 		
 	int i, j, *dir, *ind, sel, ch, eep;
 	size_t size=0;
+	
+	_endram = ENDRAM_MAGIC;
+	
 	sdb_find_devices();
 	uart_init_sw();
 	uart_init_hw();
 	
+	shell_init();
+	
 	fd.fd_regs_base = BASE_FINE_DELAY;
 	fd.fd_owregs_base= fd.fd_regs_base + 0x500;		/* regs_base + 0x500 */
-	//fd.calib = fd_calib_default;
 	
 	mprintf("\n\n**********************************************************\n");
-	//mprintf("LM32 UART: starting up...\n");
+	mprintf("WR-Siggen: starting up...\n");
 	//mprintf("\tUart base adress %08X\n", BASE_UART);
 	//mprintf("\tFinde Dalay base adress %08X\n\n", fd.fd_regs_base);
 	//mprintf("FD starting initilization...\n");
@@ -242,7 +256,7 @@ int main(void)
 	}
 		
 
-for (j=0; j<ARRAY_SIZE(port_base_adress); j++)
+	for (j=0; j<ARRAY_SIZE(port_base_adress); j++)
 	{
 		mprintf("\tUpdating base %08X\n", port_base_adress[j]);	
 		for(i=0; i<sizeof(crtl)/sizeof(crtl[0]); i++)
@@ -266,4 +280,7 @@ for (j=0; j<ARRAY_SIZE(port_base_adress); j++)
 	*dir=0x89;
 	mprintf("\t\tIter %d Dir %08X val %08X\n", i, dir, *dir);
 	mprintf("**** With reset-again & clean ****\n");
+		
+	check_stack();
+
 }
