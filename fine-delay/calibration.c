@@ -212,6 +212,9 @@ int fd_handle_eeprom_calibration(struct fd_dev *fd)
 			hash, horig);*/
 		return -EINVAL;
 	}
+	else
+		mprintf("Calibration hash %08x is correct (expected %08x)\n",
+			hash, horig);
 	
 	if (calib->version < 3) {
 		mprintf("Calibration version %i < 3: refusing to work\n",

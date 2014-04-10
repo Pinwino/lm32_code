@@ -33,7 +33,7 @@ int sdbfs_dev_create(struct sdbfs *fs, int verbose)
 	fs->next = sdbfs_list;
 	sdbfs_list = fs;
 
-	return 0;
+	return magic;
 }
 
 int sdbfs_dev_destroy(struct sdbfs *fs)

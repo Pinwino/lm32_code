@@ -35,26 +35,26 @@ static void fd_do_reset(struct fd_dev *fd, int hw_reset)
 	if (hw_reset) {
 		val= FD_RSTR_LOCK_W(0xdead) | FD_RSTR_RST_CORE_MASK;
 		adr=FD_REG_RSTR;
-		mprintf("\t\tDir %08X val %08X\n", val, adr);
+		mprintf("\t\VAL %08X ADR %08X\n", val, adr);
 		fd_writel(fd, val, adr);
 		udelay(10000);
 		val= FD_RSTR_LOCK_W(0xdead) | FD_RSTR_RST_CORE_MASK | FD_RSTR_RST_FMC_MASK;
 		adr=FD_REG_RSTR;
-		mprintf("\t\tDir %08X val %08X\n", val, adr);
+		mprintf("\t\VAL %08X ADR %08X\n", val, adr);
 		fd_writel(fd, val, adr);
 		/* TPS3307 supervisor needs time to de-assert master reset */
-		msleep(600);
+		//msleep(600);
 		return;
 	}
 	
 	val = FD_RSTR_LOCK_W(0xdead) | FD_RSTR_RST_FMC_MASK;
 	adr = FD_REG_RSTR;
-	mprintf("\t\tDir %08X val %08X\n", val, adr);
+	mprintf("\t\VAL %08X ADR %08X\n", val, adr);
 	fd_writel(fd, val,  adr);
 	udelay(1000);
 	val = FD_RSTR_LOCK_W(0xdead) | FD_RSTR_RST_FMC_MASK | FD_RSTR_RST_CORE_MASK;
 	adr = FD_REG_RSTR;
-	mprintf("\t\tDir %08X val %08X\n", val, adr);
+	mprintf("\t\VAL %08X ADR %08X\n", val, adr);
 	fd_writel(fd, val, adr);
 	udelay(1000);
 }
@@ -68,7 +68,7 @@ int fd_reset_again(struct fd_dev *fd)
 
 	mprintf("********** Reset again ***********\n");
 	/* Reset the FD core once we have proper reference/TDC clocks */
-	d_do_reset(fd, 0 /* not hw */);
+	fd_do_reset(fd, 0 /* not hw */);
 
 	j = jiffies + 2 * HZ;
 	while (time_before(jiffies, j)) {
@@ -161,53 +161,21 @@ int main(void)
 	//mprintf("\tUart base adress %08X\n", BASE_UART);
 	//mprintf("\tFinde Dalay base adress %08X\n\n", fd.fd_regs_base);
 	//mprintf("FD starting initilization...\n");
+		
 	
-	mprintf("\tFD Core Reset\n");
-  	dir=0x80000;
-	*dir= 0xdead0002;
-	usleep(1000);
-	*dir= 0xdead0003;
-	mprintf("\tFD Core Reset Done\n\n");
-	
-	
-	eep=fd_i2c_init(&fd);
-	
-	/*fmc_loc.eeprom_len = SPEC_I2C_EEPROM_SIZE;
-	mprintf("LEN = %d\n", fmc_loc.eeprom_len);
-	fmc_loc.eeprom = malloc((size_t) fmc_loc.eeprom_len );
-	
-	size = fd_eeprom_read(&fd, 0x50, 0, fmc_loc.eeprom, (size_t) fmc_loc.eeprom_len );
-	dumpstruct("Local fmc struc", fmc_loc.eeprom, fmc_loc.eeprom_len-4096);
-	
-	free(fmc_loc.eeprom);*/
-	
-	//fd_read_calibration_eeprom(&fmc_loc, &(fd.calib));
-	
+	fd_i2c_init(&fd);		
 	/* Hack */
 	fd.fmc = &fmc_loc; 
-	
 	fd.fmc->eeprom_len = SPEC_I2C_EEPROM_SIZE;
 	mprintf("LEN = %d\n", fd.fmc->eeprom_len);
 	fd.fmc->eeprom = malloc((size_t) (fd.fmc->eeprom_len));
-	
 	fd_eeprom_read(&fd, 0x50, 0, fd.fmc->eeprom, (size_t) (fd.fmc->eeprom_len));
-	//dumpstruct("Pointer to fd's fmc struc", fd.fmc->eeprom, fd.fmc->eeprom_len-4096);
-	
-	//mprintf ("size=%d\n", size);
-	//for (i=0; i< fmc.eeprom_len)
-	//dumpstruct("fmc.eeprom", fmc.eeprom, fmc.eeprom_len-2048);
-
-	
-	//fd_read_calibration_eeprom(fd.fmc, &(fd.calib));
 	fd_handle_eeprom_calibration(&fd);
 	
 	free(fd.fmc->eeprom);
 	
 	mprintf("\tFD Core Reset\n");
-  	dir=0x80000;
-	*dir= 0xdead0002;
-	usleep(1000);
-	*dir= 0xdead0003;
+	fd_do_reset(&fd, 1);
 	mprintf("\tFD Core Reset Done\n\n");
 	
 	mprintf("\tInit SPI\n");
@@ -228,7 +196,6 @@ int main(void)
 	
 	mprintf("\tInit OneWire\n");
 		fd_onewire_init (&fd);
-		//w1_read_temp()
 	mprintf("\tOneWire initialized\n");
 	
 	mprintf("\tInit gpio-default\n");
@@ -236,19 +203,7 @@ int main(void)
 	mprintf("\tgpio-default initialized\n\n");
 	
 	mprintf("\tReset Again\n");
-	/*fd_do_reset(&fd, 1);*/
-	dir=0x80000;
-	*dir= 0xdead0001;
-	usleep(1000);
-	*dir= 0xdead0003;
-	usleep(1000);
-	*dir= 0xdead0001;
-	usleep(1000);
-	*dir= 0xdead0003;
-	usleep(1000);
-	dir=0x80008;
-	*dir=0x00000001;
-	usleep(1000);
+		fd_reset_again(&fd);
 	mprintf("\tFD Reset Again Done\n\n");
 	
 	mprintf("\tInit ACAM\n");
@@ -310,4 +265,5 @@ for (j=0; j<ARRAY_SIZE(port_base_adress); j++)
 	dir=BASE_FINE_DELAY + FD_REG_TCR;
 	*dir=0x89;
 	mprintf("\t\tIter %d Dir %08X val %08X\n", i, dir, *dir);
+	mprintf("**** With reset-again & clean ****\n");
 }

@@ -19,6 +19,7 @@
 #include "fine-delay.h"
 #include "hw/fd_main_regs.h"
 #define ndelay usleep
+#define printk mprintf
 
 static void set_sda(struct fd_dev *fd, int val)
 {
@@ -27,8 +28,10 @@ static void set_sda(struct fd_dev *fd, int val)
 	reg = fd_readl(fd, FD_REG_I2CR) & ~FD_I2CR_SDA_OUT;
 	if (val)
 		reg |= FD_I2CR_SDA_OUT;
+	//mprintf("ADR 0x%08x VAL 0x%08x\n", FD_REG_I2CR, reg);
 	fd_writel(fd, reg, FD_REG_I2CR);
-	ndelay(2000);
+	//ndelay(2000);
+	ndelay(2);
 }
 
 static void set_scl(struct fd_dev *fd, int val)
@@ -38,8 +41,10 @@ static void set_scl(struct fd_dev *fd, int val)
 	reg = fd_readl(fd, FD_REG_I2CR) & ~FD_I2CR_SCL_OUT;
 	if (val)
 		reg |= FD_I2CR_SCL_OUT;
+		//mprintf("ADR 0x%08x VAL 0x%08x\n", FD_REG_I2CR, reg);
 	fd_writel(fd, reg, FD_REG_I2CR);
-	ndelay(2000);
+	//ndelay(2000);
+	ndelay(2);
 }
 
 static int get_sda(struct fd_dev *fd)
@@ -134,11 +139,13 @@ int fd_eeprom_read(struct fd_dev *fd, int i2c_addr, uint32_t offset,
 {
 	int i;
 	uint8_t *buf8 = buf;
+	uint32_t aux=0;
 	unsigned char c;
 
-	for(i = 0; i < size; i++) {
+	/*for(i = 0; i < size; i++) {
 		mi2c_start(fd);
 		if(mi2c_put_byte(fd, i2c_addr << 1) < 0) {
+			mprintf("0x%x\n", i2c_addr);
 			mi2c_stop(fd);
 			return -EIO;
 		}
@@ -152,7 +159,31 @@ int fd_eeprom_read(struct fd_dev *fd, int i2c_addr, uint32_t offset,
 		mi2c_get_byte(fd, &c, 0);
 		*buf8++ = c;
 		mi2c_stop(fd);
+	}*/
+	
+		/* Read it all in a single loop: hardware allows it */
+	mi2c_start(fd);
+	if(mi2c_put_byte(fd, i2c_addr << 1) < 0) {
+		mi2c_stop(fd);
+		return -EIO;
 	}
+	aux = (offset >> 8) & 0xff;
+	printk("\t(offset >> 8) & 0xff = %lu\n", aux);
+	mi2c_put_byte(fd, aux);
+	aux = offset & 0xff;
+	printk("\toffset & 0xff = %lu\n", aux);
+	mi2c_put_byte(fd, aux);
+	mi2c_stop(fd);
+	mi2c_start(fd);
+	aux=((i2c_addr << 1) | 1);
+	printk("\t(fmc->eeprom_addr << 1) | 1 = 0x%x\n", aux);
+	mi2c_put_byte(fd, aux);
+	while (size--) {
+		mi2c_get_byte(fd, &c, size != 0);
+		*buf8++ = c;
+		//printk("read 0x%08x, %4i to go\n", c, size);
+	}
+	mi2c_stop(fd);
 	return size;
 }
 
@@ -183,6 +214,46 @@ int fd_eeprom_write(struct fd_dev *fd, int i2c_addr, uint32_t offset,
 	}
 	return size;
 }
+
+/*int fd_eeprom_write(struct fd_dev *fd, int i2c_addr, uint32_t offset,
+		 void *buf, size_t size)
+{
+	int ret = size;
+	uint8_t *buf8 = buf;
+	uint32_t aux;
+	unsigned char c;
+	
+	printk("****> spec_eeprom_read <****\n");
+	printk("\tfmc->eeprom_addr = 0x%x\n", fmc->eeprom_addr);
+	printk("\toffset = %lu\n", offset);
+	printk("\tsize = %d\n", size);
+
+	/* Read it all in a single loop: hardware allows it 
+	mi2c_start(fmc);
+	if(mi2c_put_byte(fmc, fmc->eeprom_addr << 1) < 0) {
+		mi2c_stop(fmc);
+		return -EIO;
+	}
+	aux = (offset >> 8) & 0xff;
+	printk("\t(offset >> 8) & 0xff = %lu\n", aux);
+	mi2c_put_byte(fmc, aux);
+	aux = offset & 0xff;
+	printk("\toffset & 0xff = %lu\n", aux);
+	mi2c_put_byte(fmc, aux);
+	mi2c_stop(fmc);
+	mi2c_start(fmc);
+	aux=((fmc->eeprom_addr << 1) | 1);
+	printk("\t(fmc->eeprom_addr << 1) | 1 = 0x%x\n", aux);
+	mi2c_put_byte(fmc, aux);
+	while (size--) {
+		mi2c_get_byte(fmc, &c, size != 0);
+		*buf8++ = c;
+		//printk("read 0x%08x, %4i to go\n", c, size);
+	}
+	mi2c_stop(fmc);
+	return ret;
+}*/
+
 
 int fd_i2c_init(struct fd_dev *fd)
 {

@@ -1,7 +1,6 @@
 obj-$(CONFIG_WR_NODE) += \
 	dev/endpoint.o \
 	dev/ep_pfilter.o \
-	dev/i2c.o \
 	dev/minic.o \
 	dev/pps_gen.o \
 	dev/syscon.o \
