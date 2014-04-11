@@ -90,7 +90,7 @@ include shell/shell.mk
 include lib/lib.mk
 include pp_printf/printf.mk
 include dev/dev.mk
-include softpll/softpll.mk
+#include softpll/softpll.mk
 
 obj-$(CONFIG_WR_NODE) += check-error.o
 
@@ -106,7 +106,7 @@ LDFLAGS = $(LDFLAGS_PLATFORM) \
 
 OBJS = $(obj-y)
 
-OUTPUT-$(CONFIG_WR_NODE)   = wrc
+OUTPUT-$(CONFIG_WR_NODE)   = uart
 OUTPUT-$(CONFIG_WR_SWITCH) = rt_cpu
 OUTPUT := $(OUTPUT-y)
 

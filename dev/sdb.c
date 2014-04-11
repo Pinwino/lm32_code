@@ -128,7 +128,7 @@ static void print_devices_deep(unsigned int base, unsigned int sdb)
 
 		memcpy(buf, record->device.sdb_component.product.name, 19);
 		buf[19] = 0;
-		mprintf("%8x:%8x 0x%8x %s\n",
+		mprintf("%08x:%08x 0x%08x %s\n",
 			record->device.sdb_component.product.vendor_id.low,
 			record->device.sdb_component.product.device_id,
 			base + record->device.sdb_component.addr_first.low,
@@ -150,12 +150,12 @@ void sdb_print_devices(void)
 
 void sdb_find_devices(void)
 {
-	BASE_MINIC =         find_device(0xab28633a);
-	BASE_EP =            find_device(0x650c2d4f);
-	BASE_SOFTPLL =       find_device(0x65158dc0);
+	//BASE_MINIC =         find_device(0xab28633a);
+	//BASE_EP =            find_device(0x650c2d4f);
+	//BASE_SOFTPLL =       find_device(0x65158dc0);
 	BASE_PPS_GEN =       find_device(0xde0d8ced);
 	BASE_SYSCON =        find_device(0xff07fc47);
-	BASE_UART =          find_device(0xe2d13d04);
+	BASE_UART =          find_device(0xdead0fee);
 	BASE_ONEWIRE =       find_device(0x779c5443);
 	BASE_ETHERBONE_CFG = find_device(0x68202b22);
 }

@@ -18,7 +18,7 @@
 #include "uart.h"
 #include "syscon.h"
 #include "shell.h"
-#include "eeprom.h"
+//#include "eeprom.h"
 
 #define SH_MAX_LINE_LEN 80
 #define SH_MAX_ARGS 8
@@ -29,6 +29,7 @@
 #define SH_PROMPT 0
 #define SH_INPUT 1
 #define SH_EXEC 2
+#define SH_INIT 3 /* Hack */
 
 #define ESCAPE_FLAG 0x10000
 
@@ -126,15 +127,19 @@ int shell_exec(const char *cmd)
 void shell_init()
 {
 	cmd_len = cmd_pos = 0;
-	state = SH_PROMPT;
+	state = SH_INIT;
 }
 
 void shell_interactive()
 {
 	int c;
 	switch (state) {
+	case SH_INIT:
+		mprintf("\n");
+		state = SH_PROMPT;
+	
 	case SH_PROMPT:
-		mprintf("wrc# ");
+		mprintf("WR-Dbg# ");
 		cmd_pos = 0;
 		cmd_len = 0;
 		state = SH_INPUT;
@@ -248,7 +253,7 @@ const char *fromdec(const char *dec, int *v)
 	return dec;
 }
 
-int shell_boot_script(void)
+/*int shell_boot_script(void)
 {
 	uint8_t next = 0;
 
@@ -272,4 +277,4 @@ int shell_boot_script(void)
 	}
 
 	return 0;
-}
+}*/
