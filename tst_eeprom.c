@@ -279,7 +279,7 @@ int main(void)
 	dir=BASE_FINE_DELAY + FD_REG_TCR;
 	*dir=0x89;
 	mprintf("\t\tIter %d Dir %08X val %08X\n", i, dir, *dir);
-	mprintf("**** With reset-again & clean ****\n");
+	mprintf("**** no_posix & ppsi ****\n");
 		
 	check_stack();
 

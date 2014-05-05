@@ -21,17 +21,29 @@ config PRINTF_XINT
 	boolean
 	default y
 
+config RAMINIT
+	int
+	default 0x00040000
+
 config RAMSIZE
 	int
 	default 28672 if WR_SWITCH
-	default 90112
+	default 92160
 
 # CONFIG_WR_SWITCH has no further options at all at this point
 if WR_NODE
 
 config STACKSIZE
 	int  
-	default 2048
+	default 22528
+	
+config HEAPSIZE
+	int 
+	default 12352
+	
+config ALING
+	int
+	default 4
 
 config PPSI
 	boolean

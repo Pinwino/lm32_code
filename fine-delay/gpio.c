@@ -14,7 +14,6 @@
 #include "fine-delay.h"
 #include <syscon.h>
 #include <errno.h>
-#include <pp-printf.h>
 
 #define SPI_RETRIES 100
 

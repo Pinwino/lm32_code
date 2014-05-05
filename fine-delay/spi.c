@@ -22,7 +22,7 @@
 //#define jiffies (unsigned long) timer_get_tics()
 #define jiffies (unsigned long) usleep(1000);
 #define HZ 100
-#define vcxo_default_tune  41711 // FAAAAKEEEEEEEEEEEEEEEEE -> Default calibration
+//#define vcxo_default_tune  41711 // FAAAAKEEEEEEEEEEEEEEEEE -> Default calibration
 
 int fd_spi_xfer(struct fd_dev *fd, int ss, int num_bits,
 		uint32_t in, uint32_t *out)
@@ -66,8 +66,8 @@ int fd_spi_xfer(struct fd_dev *fd, int ss, int num_bits,
 int fd_spi_init(struct fd_dev *fd)
 {
 	/* write default to DAC for VCXO */
-	printk("\t\tIn 0x%08X\n", vcxo_default_tune & 0xffff);
-	fd_spi_xfer(fd, FD_CS_DAC, 24, vcxo_default_tune & 0xffff,
+	//printk("\t\tIn 0x%08X\n", fd->calib.vcxo_default_tune & 0xffff);
+	fd_spi_xfer(fd, FD_CS_DAC, 24, fd->calib.vcxo_default_tune & 0xffff,
 		    NULL);
 	return 0;
 }
