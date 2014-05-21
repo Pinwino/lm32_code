@@ -29,6 +29,7 @@
 #define SH_PROMPT 0
 #define SH_INPUT 1
 #define SH_EXEC 2
+#define SH_INIT 3
 
 #define ESCAPE_FLAG 0x10000
 
@@ -126,15 +127,20 @@ int shell_exec(const char *cmd)
 void shell_init()
 {
 	cmd_len = cmd_pos = 0;
-	state = SH_PROMPT;
+	state = SH_INIT;
 }
 
 void shell_interactive()
 {
 	int c;
 	switch (state) {
+	case SH_INIT:
+		mprintf("\n");
+		state = SH_PROMPT;
+	break;
+		
 	case SH_PROMPT:
-		mprintf("wrc# ");
+		mprintf("WR-Dgb# ");
 		cmd_pos = 0;
 		cmd_len = 0;
 		state = SH_INPUT;
