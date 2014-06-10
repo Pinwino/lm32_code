@@ -1,4 +1,4 @@
-# Tomasz Wlostowski for CERN, 2011,2012
+# Jose Jimenez, 2013,2014
 
 CROSS_COMPILE ?= lm32-elf-
 export CROSS_COMPILE
@@ -13,17 +13,17 @@ SIZE =		$(CROSS_COMPILE)size
 
 AUTOCONF = $(CURDIR)/include/generated/autoconf.h
 
-PTP_NOPOSIX = ptp-noposix
-PPSI = ppsi
-
 # we miss CONFIG_ARCH_LM32 as we have no other archs by now
-obj-y = arch/lm32/crt0.o arch/lm32/irq.o sbrkr.o fine-delay/spi.o fine-delay/gpio.o fine-delay/pll.o fine-delay/onewire.o fine-delay/calibrate.o fine-delay/acam.o fine-delay/time.o fine-delay/i2c.o fine-delay/calibration.o
-LDS-$(CONFIG_WR_NODE)   = arch/lm32/ram.ld
-LDS-$(CONFIG_WR_SWITCH) = arch/lm32/ram-wrs.ld
+obj-y = arch/lm32/crt0.o arch/lm32/irq.o sbrkr.o
+obj-y += fine-delay/spi.o fine-delay/gpio.o fine-delay/pll.o fine-delay/onewire.o fine-delay/time.o fine-delay/i2c.o fine-delay/timer.o irq_timer.o
+obj-n += fine-delay/calibrate_old.o fine-delay/acam_old.o fine-delay/calibration_old.o
+obj-y += fine-delay/calibrate.o fine-delay/acam.o fine-delay/calibration.o
+obj-n += fine-delay/tools-util.o
+obj-y += linux/time.o linux/math64.o 
+obj-n += opt_org.o fine-delay/fdelay-output.o
+LDS-y = arch/lm32/ram.ld
 
-obj-$(CONFIG_WR_NODE)   += tst_eeprom.o
-obj-$(CONFIG_WR_SWITCH) += wrs_main.o
-obj-$(CONFIG_WR_SWITCH) += ipc/minipc-mem-server.o ipc/rt_ipc.o 
+obj-y += tst_eeprom.o #tst_tics.o
 
 # our linker script is preprocessed, so have a rule here
 %.ld: %.ld.S $(AUTOCONF) .config
@@ -31,56 +31,8 @@ obj-$(CONFIG_WR_SWITCH) += ipc/minipc-mem-server.o ipc/rt_ipc.o
 
 
 cflags-y =	-ffreestanding -include $(AUTOCONF) -Iinclude/std -Iinclude \
-			-I. -Isoftpll -Iipc
+			-I.
 cflags-y +=	-I$(CURDIR)/pp_printf
-
-cflags-$(CONFIG_PTP_NOPOSIX) += \
-	-DPTPD_FREESTANDING \
-	-DWRPC_EXTRA_SLIM \
-	-DPTPD_MSBF \
-	-DPTPD_DBG \
-	-DPTPD_NO_DAEMON \
-	-DNEW_SINGLE_WRFSM \
-	-DPTPD_TRACE_MASK=0 \
-	-include $(PTP_NOPOSIX)/compat.h \
-	-include $(PTP_NOPOSIX)/PTPWRd/dep/trace.h \
-	-include $(PTP_NOPOSIX)/libposix/ptpd-wrappers.h \
-	-I$(PTP_NOPOSIX)/libptpnetif \
-	-I$(PTP_NOPOSIX)/PTPWRd
-
-obj-$(CONFIG_PTP_NOPOSIX) += wrc_ptp_noposix.o \
-	monitor/monitor.o \
-	lib/ptp-noposix-wrappers.o \
-	$(PTP_NOPOSIX)/PTPWRd/arith.o \
-	$(PTP_NOPOSIX)/PTPWRd/bmc.o \
-	$(PTP_NOPOSIX)/PTPWRd/dep/msg.o \
-	$(PTP_NOPOSIX)/PTPWRd/dep/net.o \
-	$(PTP_NOPOSIX)/PTPWRd/dep/sys.o \
-	$(PTP_NOPOSIX)/PTPWRd/dep/timer.o \
-	$(PTP_NOPOSIX)/PTPWRd/dep/wr_servo.o \
-	$(PTP_NOPOSIX)/PTPWRd/dep/servo.o \
-	$(PTP_NOPOSIX)/PTPWRd/protocol.o \
-	$(PTP_NOPOSIX)/PTPWRd/wr_protocol.o \
-	$(PTP_NOPOSIX)/libposix/freestanding-startup.o
-
-cflags-$(CONFIG_PPSI) += \
-	-ffreestanding \
-	-include include/ppsi-wrappers.h \
-	-Iinclude \
-	-I$(PPSI)/include \
-	-I$(PPSI)/arch-wrpc \
-	-I$(PPSI)/arch-wrpc/include \
-	-I$(PPSI)/proto-ext-whiterabbit \
-	-Iboards/spec
-
-obj-ppsi = \
-	$(PPSI)/ppsi.o \
-	$(PPSI)/proto-standard/libstd.a
-
-obj-$(CONFIG_PPSI) += \
-	monitor/monitor_ppsi.o \
-	lib/ppsi-wrappers.o \
-	$(obj-ppsi)
 
 CFLAGS_PLATFORM  = -mmultiply-enabled -mbarrel-shift-enabled
 LDFLAGS_PLATFORM = -mmultiply-enabled -mbarrel-shift-enabled \
@@ -90,56 +42,39 @@ include shell/shell.mk
 include lib/lib.mk
 include pp_printf/printf.mk
 include dev/dev.mk
-include softpll/softpll.mk
+#include softpll/softpll.mk
 
-obj-$(CONFIG_WR_NODE) += check-error.o
+obj-y += check-error.o
 
-obj-$(CONFIG_WR_NODE) += sdb-lib/libsdbfs.a
-cflags-$(CONFIG_WR_NODE) += -Isdb-lib
+obj-y += sdb-lib/libsdbfs.a
+cflags-y += -Isdb-lib
 
 CFLAGS = $(CFLAGS_PLATFORM) $(cflags-y) -Wall \
 	-ffunction-sections -fdata-sections -Os \
-	-include include/trace.h -ggdb
+	-ggdb
 
 LDFLAGS = $(LDFLAGS_PLATFORM) \
 	-Wl,--gc-sections -Os -lgcc -lc
 
 OBJS = $(obj-y)
 
-OUTPUT-$(CONFIG_WR_NODE)   = uart
-OUTPUT-$(CONFIG_WR_SWITCH) = rt_cpu
-OUTPUT := $(OUTPUT-y)
+OUTPUT   = uart
 
-REVISION=$(shell git describe --dirty --always)
+#REVISION=$(shell git describe --dirty --always)
 
 all: tools $(OUTPUT).ram $(OUTPUT).vhd $(OUTPUT).mif
 
 .PRECIOUS: %.elf %.bin
-.PHONY: all tools clean gitmodules $(PPSI)/ppsi.o
-
-# we need to remove "ptpdump" support for ppsi if RAM size is small and
-# we include etherbone
-ifneq ($CONFIG_RAMSIZE,131072)
-  ifdef CONFIG_ETHERBONE
-    PPSI_USER_CFLAGS = -DCONFIG_NO_PTPDUMP
-  endif
-endif
-
-PPSI_USER_CFLAGS += -DDIAG_PUTS=uart_sw_write_string
-
-$(obj-ppsi):
-	$(MAKE) -C $(PPSI) ARCH=wrpc PROTO_EXT=whiterabbit \
-		CROSS_COMPILE=$(CROSS_COMPILE) CONFIG_NO_PRINTF=y \
-		USER_CFLAGS="$(PPSI_USER_CFLAGS)"
+.PHONY: all tools clean
 
 sdb-lib/libsdbfs.a:
 	$(MAKE) -C sdb-lib
 
-$(OUTPUT).elf: $(LDS-y) $(AUTOCONF) gitmodules $(OUTPUT).o config.o
-	$(CC) $(CFLAGS) -DGIT_REVISION=\"$(REVISION)\" -c revision.c
-	${CC} -o $@  sbrkr.o revision.o config.o $(OUTPUT).o $(LDFLAGS)
+$(OUTPUT).elf: $(LDS-y) $(AUTOCONF) $(OUTPUT).o config.o
+	${CC} -o $@  sbrkr.o config.o $(OUTPUT).o $(LDFLAGS)
 	${OBJDUMP} -d $(OUTPUT).elf > $(OUTPUT)_disasm.S
 	$(SIZE) $@
+	
 
 $(OUTPUT).o: $(OBJS)
 	$(LD) --gc-sections -e _start -r $(OBJS) -T bigobj.lds -o $@
@@ -167,22 +102,21 @@ $(AUTOCONF): silentoldconfig
 
 clean:
 	rm -f $(OBJS) $(OUTPUT).elf $(OUTPUT).bin $(OUTPUT).ram $(LDS)
-	$(MAKE) -C $(PPSI) clean
 	$(MAKE) -C sdb-lib clean
 
 %.o:		%.c
-	${CC} $(CFLAGS) $(PTPD_CFLAGS) $(INCLUDE_DIR) $(LIB_DIR) -c $*.c -o $@
+	${CC} $(CFLAGS) $(INCLUDE_DIR) $(LIB_DIR) -c $*.c -o $@
 
 tools:
 	$(MAKE) -C tools
 
 # if needed, check out the submodules (first time only), so users
 # who didn't read carefully the manual won't get confused
-gitmodules:
-	@test -d ptp-noposix/libposix || echo "Checking out submodules"
-	@test -d ptp-noposix/libposix || git submodule update --init
-	@test -d ppsi/arch-wrpc || git submodule update --init
-
+#gitmodules:
+#	@test -d ptp-noposix/libposix || echo "Checking out submodules"
+#	@test -d ptp-noposix/libposix || git submodule update --init
+#	@test -d ppsi/arch-wrpc || git submodule update --init
+#
 
 # following targets from Makefile.kconfig
 silentoldconfig:

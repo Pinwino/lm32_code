@@ -18,7 +18,7 @@
 #define htons(x) x
 #endif
 
-int needIP = 1;
+int needIP = 0;
 static uint8_t myIP[4];
 static wr_socket_t *ipv4_socket;
 

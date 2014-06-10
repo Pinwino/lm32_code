@@ -11,21 +11,14 @@
  * option, any later version.
  */
 
-//#include <linux/jiffies.h>
-//#include <linux/io.h>
-//#include <linux/delay.h>
-//#include <linux/math64.h>
-//#include <linux/moduleparam.h>
+#include <linux/jiffies.h>
+#include <linux/io.h>
+#include <linux/delay.h>
+#include <linux/math64.h>
+#include <linux/moduleparam.h>
 #include "fine-delay.h"
 #include "hw/fd_main_regs.h"
 #include "hw/acam_gpx.h"
-#include "errno.h"
-#include "syscon.h"
-
-#define HZ 100
-#define jiffies timer_get_tics()
-#define printk mprintf
-#define msleep timer_delay
 
 int fd_calib_period_s = 5;
 //module_param_named(calib_s, fd_calib_period_s, int, 0444);
@@ -63,14 +56,14 @@ static int acam_calc_pll(uint64_t tref, int bin, int *hsdiv_out,
 	 * and then shift out the zeros to get smaller values.
 	 * 
 	 */
-	//if (0) {
-		//x = (tref << 16) / 216 / bin;
+	if (0) {
+		x = (tref << 16) / 216 / bin;
 		//printf("x = %lf\n", (double)x / (1<<16));
-	//} else {
+	} else {
 		/* We can't divide 64 bits in kernel space */
 		tmpll = div_u64_rem(tref << 16, 216, &rem);
 		x = div_u64_rem(tmpll, bin, &rem);
-	//}
+	}
 
 	/* Now, shift out the max bits (usually 7) and drop decimal part */
 	refdiv = ACAM_MAX_REFDIV;
@@ -88,12 +81,12 @@ static int acam_calc_pll(uint64_t tref, int bin, int *hsdiv_out,
 	*refdiv_out = refdiv;
 
 	/* Finally, calculate what we really have */
-	//if (0) {
-		//bin = (tref << refdiv) / 216 / hsdiv;
-	//} else {
+	if (0) {
+		bin = (tref << refdiv) / 216 / hsdiv;
+	} else {
 		tmpll = div_u64_rem(tref << refdiv, 216, &rem);
 		bin = div_u64_rem(tmpll, hsdiv, &rem);
-	//}
+	}
 	return (bin + 1); /* We always return the bin size in the I mode. Other modes should scale it appropriately. */
 }
 
@@ -119,8 +112,6 @@ uint32_t acam_readl(struct fd_dev *fd, int reg)
 
 void acam_writel(struct fd_dev *fd, int val, int reg)
 {
-	if (val == 0 && reg ==0)
-		printk("Disabling\n");
 	acam_set_address(fd, reg);
 	fd_writel(fd, val, FD_REG_TDR);
 	fd_writel(fd, FD_TDCSR_WRITE, FD_REG_TDCSR);
@@ -168,8 +159,7 @@ static int acam_test_addr_bit(struct fd_dev *fd, int base, int bit,
 	return 0;
 
 out:
-	//pr_err("%s: ACAM address bit %i failure\n", KBUILD_MODNAME, bit);
-	mprintf ("ACAM address bit %i failure\n", bit);
+	pr_err("%s: ACAM address bit %i failure\n", KBUILD_MODNAME, bit);
 	return -EIO;
 }
 
@@ -200,8 +190,7 @@ static int acam_test_bus(struct fd_dev *fd)
 	return 0;
 
 out:
-	//pr_err("%s: ACAM data bit 0x%06x failure\n", KBUILD_MODNAME, i);
-	mprintf("ACAM data bit 0x%06x failure\n", i);
+	pr_err("%s: ACAM data bit 0x%06x failure\n", KBUILD_MODNAME, i);
 	return -EIO;
 }
 
@@ -302,30 +291,22 @@ static int __acam_config(struct fd_dev *fd, struct acam_mode_setup *s)
 	struct acam_init_data *p;
 	uint32_t regval;
 	unsigned long j;
-	
-	printk("ACAM calc pll\n");
+
 	fd->bin = acam_calc_pll(ACAM_FP_TREF, ACAM_FP_BIN, &hsdiv, &refdiv);
-	printk("Load reg7val\n");
 	reg7val = AR7_HSDiv(hsdiv) | AR7_RefClkDiv(refdiv);
 
-	/*pr_debug("%s: config for %s-mode (bin 0x%x, hsdiv %i, refdiv %i)\n",
-		 __func__, s->name, fd->bin, hsdiv, refdiv);*/
-		 
-	mprintf("Config for %s-mode (bin 0x%x, hsdiv %i, refdiv %i)\n", s->name, fd->bin, hsdiv, refdiv);
+	pr_debug("%s: config for %s-mode (bin 0x%x, hsdiv %i, refdiv %i)\n",
+		 __func__, s->name, fd->bin, hsdiv, refdiv);
 
 	/* Disable TDC inputs prior to configuring */
 	fd_writel(fd, FD_TDCSR_STOP_DIS | FD_TDCSR_START_DIS, FD_REG_TDCSR);
-	printk("Disable TDC inputs prior to configuring\n");
 
 	/* Disable the ACAM PLL for a while to make sure it is reset */
 	acam_writel(fd, 0, 0);
-	printk("Disable the ACAM PLL for a while to make sure it is reset: STEP 1\n");
 	acam_writel(fd, 7, 0);
-	printk("Disable the ACAM PLL for a while to make sure it is reset: STEP 2\n");
-	
-	//msleep(100);
-	printk("Awake again\n");
-	
+
+	msleep(100);
+
 	for (p = s->data, i = 0; i < s->data_size; p++, i++) {
 		regval = p->val;
 		if (p->addr == 7)
@@ -341,17 +322,14 @@ static int __acam_config(struct fd_dev *fd, struct acam_mode_setup *s)
 	}
 
 	/* Wait for the oscillator to lock */
-	printk ("Wait for the oscillator to lock\n");
 	j = jiffies + 2 * HZ;
 	while (time_before(jiffies, j)) {
 		if (acam_is_pll_locked(fd))
 			break;
-		//msleep(10);
-	    usleep(10*1000);
+		msleep(10);
 	}
 	if (time_after_eq(jiffies, j)) {
-		//pr_err("%s: ACAM PLL does not lock\n", __func__);
-		mprintf ("ACAM PLL does not lock\n");
+		pr_err("%s: ACAM PLL does not lock\n", __func__);
 		return -EIO;
 	}
 	/* after config, set the FIFO address for further reads */
@@ -367,9 +345,7 @@ int fd_acam_config(struct fd_dev *fd, enum fd_acam_modes mode)
 	for (s = fd_acam_table, i = 0; i < ARRAY_SIZE(fd_acam_table); s++, i++)
 		if (mode == s->mode)
 			return __acam_config(fd, s);
-	
-	mprintf("invalid mode %i\n", mode);
-	//pr_err("%s: invalid mode %i\n", __func__, mode);
+	pr_err("%s: invalid mode %i\n", __func__, mode);
 	return -EINVAL;
 }
 
@@ -380,21 +356,15 @@ int fd_acam_init(struct fd_dev *fd)
 
 	acam_set_bypass(fd, 1); /* Driven by host, not core */
 
-
-	printk("********** Init ACAM module ***********\n");
-	printk("Bus test\n");
 	if ( (ret = acam_test_bus(fd)) )
 		return ret;
 
-	printk("Set I-Mode\n");
 	if ( (ret = fd_acam_config(fd, ACAM_IMODE)) )
 		return ret;
 
-	printk("Calibrate outputs\n");
 	if ( (ret = fd_calibrate_outputs(fd)) )
 		return ret;
 
-	printk("Set G-Mode\n");
 	if ( (ret = fd_acam_config(fd, ACAM_GMODE)) )
 		return ret;
 
@@ -418,15 +388,14 @@ int fd_acam_init(struct fd_dev *fd)
 	fd->temp_ready = 0;
 
 	/* Prepare the timely recalibration */
-	/*setup_timer(&fd->temp_timer, fd_update_calibration, (unsigned long)fd);
+	setup_timer(&fd->temp_timer, fd_update_calibration, (unsigned long)fd);
 	if (fd_calib_period_s)
-		mod_timer(&fd->temp_timer, jiffies + HZ * fd_calib_period_s);*/
-	printk("********** Init ACAM module ***********\n");
+		mod_timer(&fd->temp_timer, jiffies + HZ * fd_calib_period_s);
 
 	return 0;
 }
 
-/*void fd_acam_exit(struct fd_dev *fd)
+void fd_acam_exit(struct fd_dev *fd)
 {
-	del_timer_sync(&fd->temp_timer);
-}*/
+	//del_timer_sync(&fd->temp_timer);
+}

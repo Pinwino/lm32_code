@@ -6,28 +6,35 @@
  *
  * Released according to the GNU GPL, version 2 or any later version.
  */
-#include <wrc.h>
-#include <syscon.h>
+//#include <wrc.h>
+//#include <syscon.h>
+#include "sys/types.h"
 #include <shell.h>
+#include <linux/jiffies.h>
+#include "hw/tics.h"
+#include "board-wrc.h"
 
-static int usleep_lpj; /* loops per jiffy */
+
+#define timer_get_tics() jiffies 
+
+static unsigned int usleep_lpj; /* loops per jiffy */
 
 
-static inline void __delay(int count)
+static inline void __delay(unsigned long count)
 {
 	while (count-- > 0)
 		asm("");
 }
 
 
-static int verify_lpj(int lpj)
+unsigned long verify_lpj(unsigned long lpj)
 {
 	unsigned long j;
 
 	/* wait for the beginning of a tick */
 	j = timer_get_tics() + 1;
 	while (timer_get_tics() != j)
-		;
+		;//pp_printf("check %i: %li\n", lpj, j);
 
 	__delay(lpj);
 
@@ -40,8 +47,8 @@ static int verify_lpj(int lpj)
 
 void usleep_init(void)
 {
-	int lpj = 1024, test_lpj;
-	int step = 1024;
+	unsigned long lpj = 1024, test_lpj;
+	unsigned long step = 1024;
 
 	/* Increase until we get over it */
 	while (verify_lpj(lpj) == 0) {
@@ -66,9 +73,9 @@ void usleep_init(void)
 int usleep(useconds_t usec)
 {
 	/* Sleep 10ms each time, so we support 20x faster cards */
-	const int step = 10 * 1000;
-	const int usec_per_jiffy = 1000 * 1000 / TICS_PER_SECOND;
-	const int count_per_step = usleep_lpj * step / usec_per_jiffy;
+	const unsigned long step = 10 * 1000;
+	const unsigned long usec_per_jiffy = 1000 * 1000 / TICS_PER_SECOND;
+	const unsigned long count_per_step = usleep_lpj * step / usec_per_jiffy;
 
 	while (usec > step)  {
 		__delay(count_per_step);

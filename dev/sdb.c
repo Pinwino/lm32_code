@@ -10,15 +10,18 @@
 #include <wrc.h>
 #include "hw/memlayout.h"
 
-unsigned char *BASE_MINIC;
-unsigned char *BASE_EP;
-unsigned char *BASE_SOFTPLL;
-unsigned char *BASE_PPS_GEN;
+//unsigned char *BASE_MINIC;
+//unsigned char *BASE_EP;
+//unsigned char *BASE_SOFTPLL;
+//unsigned char *BASE_PPS_GEN;
 unsigned char *BASE_SYSCON;
 unsigned char *BASE_UART;
 unsigned char *BASE_ONEWIRE;
-unsigned char *BASE_ETHERBONE_CFG;
+//unsigned char *BASE_ETHERBONE_CFG;
 unsigned char *BASE_FINE_DELAY;
+unsigned char *BASE_TIMER;
+unsigned char *BASE_TICS;
+unsigned char *BASE_IRQ_CTRL;
 
 #define SDB_INTERCONNET 0x00
 #define SDB_DEVICE      0x01
@@ -151,14 +154,16 @@ void sdb_print_devices(void)
 
 void sdb_find_devices(void)
 {
-	BASE_MINIC =         find_device(0xab28633a);
+	//BASE_MINIC =         find_device(0xab28633a);
 	//BASE_EP =            find_device(0x650c2d4f);
 	//BASE_SOFTPLL =       find_device(0x65158dc0);
 	//BASE_PPS_GEN =       find_device(0xde0d8ced);
 	BASE_SYSCON =        find_device(0xff07fc47);
 	BASE_UART =          find_device(0xdead0fee);
 	BASE_ONEWIRE =       find_device(0x779c5443);
-	BASE_ETHERBONE_CFG = find_device(0x68202b22);
+	//BASE_ETHERBONE_CFG = find_device(0x68202b22);
 	BASE_FINE_DELAY	= 	 find_device(0xf19ede1a);
-	
+	BASE_TICS =			 find_device(0xadabadaa);
+	BASE_TIMER = 		 find_device(0x10040088);
+	BASE_IRQ_CTRL =		find_device(0x10040083);
 }

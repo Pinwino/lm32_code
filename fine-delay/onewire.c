@@ -11,18 +11,12 @@
  * option, any later version.
  */
 
-#include <ppsi/jiffies.h>
-//#include <linux/interrupt.h>
-//#include <linux/io.h>
-//#include <linux/delay.h>
+#include <linux/jiffies.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/delay.h>
 #include "fine-delay.h"
 #include "hw/fd_main_regs.h"
-#include "syscon.h"
-#include "errno.h"
-
-#define jiffies timer_get_tics()
-#define printk mprintf
-#define in_atomic() 0
 
 #define R_CSR		0x0
 #define R_CDR		0x4
@@ -73,30 +67,20 @@ static uint32_t ow_readl(struct fd_dev *fd, unsigned long reg)
 static int ow_reset(struct fd_dev *fd, int port)
 {
 	uint32_t reg, data;
-	
-	//mprintf("\nEntering Reset Function\n");
-	
+
 	data = ((port << CSR_SEL_OFS) & CSR_SEL_MSK)
 		| CSR_CYC_MSK | CSR_RST_MSK;
 	ow_writel(fd, data, R_CSR);
-	
-	//mprintf("[WRITE]: ADR %08x VAL %u\n", fd->fd_owregs_base + R_CSR, data);
-	//mprintf("[READ ]: ADR %08x VAL %u\n", fd->fd_owregs_base + R_CSR, ow_readl(fd, R_CSR));
-	//mprintf("[CHECK]: ow_readl(fd, R_CSR) = %u & CSR_CYC_MSK = %u = %u\n", ow_readl(fd, R_CSR), CSR_CYC_MSK, ow_readl(fd, R_CSR) & CSR_CYC_MSK);
-	
 	while(ow_readl(fd, R_CSR) & CSR_CYC_MSK)
 		/* FIXME: timeout */;
 	reg = ow_readl(fd, R_CSR);
-	//mprintf("[READ ]: ADR %08x VAL %u\n", fd->fd_owregs_base + R_CSR, reg);
-	//mprintf("[RET  ]:  ~reg = %u & CSR_DAT_MSK=%u = %u\n", ~reg, CSR_DAT_MSK, ~reg & CSR_DAT_MSK);
-	//mprintf("Exiting Reset Function\n");
 	return ~reg & CSR_DAT_MSK;
 }
 
 static int slot(struct fd_dev *fd, int port, int bit)
 {
 	uint32_t reg, data;
-	//mprintf("Executing slot function...\n");
+
 	data = ((port<<CSR_SEL_OFS) & CSR_SEL_MSK)
 		| CSR_CYC_MSK | (bit & CSR_DAT_MSK);
 	ow_writel(fd, data, R_CSR);
@@ -108,26 +92,20 @@ static int slot(struct fd_dev *fd, int port, int bit)
 
 static int read_bit(struct fd_dev *fd, int port)
 {
-	//mprintf("Calling slot from write_bit...\n");
-	//mprintf("slot(fd, %d, 0x1)\n", port);
 	return slot(fd, port, 0x1);
 }
 
 static int write_bit(struct fd_dev *fd, int port, int bit)
-{	
-	//mprintf("Calling slot from write_bit...\n");
-	//mprintf("slot(fd, %d, %d)\n", port, bit);
+{
 	return slot(fd, port, bit);
 }
 
 static int ow_read_byte(struct fd_dev *fd, int port)
 {
 	int byte = 0, i;
-	//mprintf("\nEntering ow_read_byte....\n");
-	for(i = 0; i < 8; i++){
-		//mprintf("Reading bit\n");
+
+	for(i = 0; i < 8; i++)
 		byte |= (read_bit(fd, port) << i);
-	}
 	return byte;
 }
 
@@ -135,10 +113,8 @@ static int ow_write_byte(struct fd_dev *fd, int port, int byte)
 {
 	int data = 0;
 	int i;
-	
-	//mprintf("\nEntering ow_write_byte....\n");
+
 	for (i = 0; i < 8; i++){
-		//mprintf("Writing bit\n");
 		data |= write_bit(fd, port, (byte & 0x1)) << i;
 		byte >>= 1;
 	}
@@ -164,14 +140,11 @@ static int ow_read_block(struct fd_dev *fd, int port, uint8_t *block, int len)
 
 static int ds18x_read_serial(struct fd_dev *fd)
 {
-	///mprintf("\nInside ds18x_read_serial\n");
-	//mprintf("Reset checking\n");
 	if(!ow_reset(fd, 0)) {
-		//mprintf("ow_reset is active\n");
-		//dev_err(&fd->fmc->dev, "Failure in resetting one-wire channel\n");
+		dev_err(&fd->fmc->dev, "Failure in resetting one-wire channel\n");
 		return -EIO;
 	}
-	//mprintf("Writing byte\n");
+
 	ow_write_byte(fd, FD_OW_PORT, CMD_ROM_READ);
 	return ow_read_block(fd, FD_OW_PORT, fd->ds18_id, 8);
 }
@@ -191,7 +164,7 @@ static int ds18x_access(struct fd_dev *fd)
 		return ow_write_byte(fd, FD_OW_PORT, CMD_ROM_SKIP);
 	}
 out:
-	//dev_err(&fd->fmc->dev, "Failure in one-wire communication\n");
+	dev_err(&fd->fmc->dev, "Failure in one-wire communication\n");
 	return -EIO;
 }
 
@@ -203,7 +176,7 @@ static void __temp_command_and_next_t(struct fd_dev *fd, int cfg_reg)
 	ow_write_byte(fd, FD_OW_PORT, CMD_CONVERT_TEMP);
 	/* The conversion takes some time, so mark when will it be ready */
 	ms = 94 * ( 1 << (cfg_reg >> 5));
-	fd->next_t = jiffies + ms;
+	fd->next_t = jiffies + msecs_to_jiffies(ms);
 }
 
 int fd_read_temp(struct fd_dev *fd, int verbose)
@@ -211,7 +184,7 @@ int fd_read_temp(struct fd_dev *fd, int verbose)
 	int i, temp;
 	unsigned long j;
 	uint8_t data[9];
-	//struct device *dev = &fd->fmc->dev;
+	struct device *dev = &fd->fmc->dev;
 
 	/* If first conversion, ask for it first */
 	if (fd->next_t == 0)
@@ -219,21 +192,19 @@ int fd_read_temp(struct fd_dev *fd, int verbose)
 
 	/* Wait for it to be ready: (FIXME: we need a time policy here) */
 	j = jiffies;
-	
-	/***************** KILLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO ************/
-	/*if (time_before(j, fd->next_t)) {
-		/* If we cannot sleep, return the previous value *
-		in (in_atomic())
+	if (time_before(j, fd->next_t)) {
+		/* If we cannot sleep, return the previous value */
+		if (in_atomic())
 			return fd->temp;
 		msleep(jiffies_to_msecs(fd->next_t - j));
-	}*/
-	/***************** KILLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO ************/
+	}
+
 	ds18x_access(fd);
 	ow_write_byte(fd, FD_OW_PORT, CMD_READ_SCRATCHPAD);
 	ow_read_block(fd, FD_OW_PORT, data, 9);
 
 	if (verbose > 1) {
-		//dev_info(dev, "%s: Scratchpad: ", __func__);
+		dev_info(dev, "%s: Scratchpad: ", __func__);
 		for (i = 0; i < 9; i++)
 			printk("%02x%c", data[i], i == 8 ? '\n' : ':');
 	}
@@ -244,12 +215,12 @@ int fd_read_temp(struct fd_dev *fd, int verbose)
 	fd->temp = temp;
 	fd->temp_ready = 1;
 
-	/*if (verbose) {
+	if (verbose) {
 		dev_info(dev, "%s: Temperature 0x%x (%i bits: %i.%03i)\n", __func__,
 			temp, 9 + (data[4] >> 5),
 			temp / 16, (temp & 0xf) * 1000 / 16);
-	}*/
-	mprintf("Temperature 0x%x (%i.%03i)\n", temp, temp / 16, (temp & 0xf) * 1000 / 16);
+	}
+
 	__temp_command_and_next_t(fd, data[4]);	/* start next conversion */
 	return temp;
 }
@@ -257,26 +228,22 @@ int fd_read_temp(struct fd_dev *fd, int verbose)
 int fd_onewire_init(struct fd_dev *fd)
 {
 	int i;
-	//printk("********** Init ONeWire module ***********\n");
-	//mprintf("Inside _init function\n");
+
 	ow_writel(fd, ((CLK_DIV_NOR & CDR_NOR_MSK)
 		       | (( CLK_DIV_OVD << CDR_OVD_OFS) & CDR_OVD_MSK)),
 		  R_CDR);
 
-	//mprintf("Write done... proceding to ds18_\n");
 	if(ds18x_read_serial(fd) < 0)
 		return -EIO;
 
-	/*if (fd->verbose) {
+	if (fd->verbose) {
 		dev_info(&fd->fmc->dev, "%s: Found DS18xx sensor: ", __func__);
 		for (i = 0; i < 8; i++)
 			printk("%02x%c", fd->ds18_id[i], i == 7 ? '\n' : ':');
-	}*/
-	
+	}
 	/* read the temperature once, to ensure it works, and print it */
-	fd_read_temp(fd, 0);
-	//printk("********** Init ONeWire module ***********\n");
-	
+	fd_read_temp(fd, 2);
+
 	return 0;
 }
 

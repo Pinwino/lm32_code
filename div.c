@@ -60,22 +60,22 @@ int main(void){
 	uint32_t divisor = 4, rem, i;
 	uint8_t val = 0x84;
 	
-	/*for(i=0; i<(sizeof(dividend)/sizeof(dividend[0])); i++){
+	for(i=0; i<(sizeof(dividend)/sizeof(dividend[0])); i++){
 		//printf("Divide %" PRIu64 " by %" PRIu32 "\n", dividend[i], divisor);
 		//quat= div_u64_rem(dividend[i], divisor, &rem);
 		//printf("Reaminder %" PRIu32 " quatotient %" PRIu64 "\n", rem, quat);
 		printf("Divide %llu by %lu \n", dividend[i], divisor);
 		quat= div_u64_rem(dividend[i], divisor, &rem);
 		printf("Reaminder %llu quatotient %lu \n", rem, quat);
-	}*/
+	}
 	
 	/*for (divisor=0; divisor<=8; divisor ++){
 		printf("%" PRIu32 " en binario es: ", divisor);
 		int2hex(divisor);
 		printf("rol32(%" PRIu32 ") = %" PRIu32 ",4) y en binario es: ", divisor, rol32(divisor, 4));
 		int2hex(divisor);
-	}*/
-	printf("Val is 0x%x and swapped is " val, ())
+	}
+	//printf("Val is 0x%x and swapped is " val, ())*/
 	
 	
 	return 0;

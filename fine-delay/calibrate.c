@@ -11,23 +11,15 @@
  * option, any later version.
  */
 
-//#include <linux/kernel.h>
-//#include <linux/slab.h>
-//#include <linux/io.h>
-//#include <linux/delay.h>
-//#include <linux/math64.h>
-#include "stdio.h"
-#include "stdlib.h"
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/io.h>
+#include <linux/delay.h>
+#include <linux/math64.h>
 #include "fine-delay.h"
 #include "hw/fd_main_regs.h"
 #include "hw/acam_gpx.h"
 #include "hw/fd_channel_regs.h"
-#include "errno.h"
-#include "syscon.h"
-
-#define printk mprintf
-#define msleep timer_delay
-//#define udelay(1) timer_delay(0.001)
 
 /* This is the same as in ./acam.c: use only at init time */
 static void acam_set_bypass(struct fd_dev *fd, int on)
@@ -72,25 +64,19 @@ static uint64_t output_delay_ps(struct fd_dev *fd, int ch, int fine, int n,
 	uint64_t *results;
 	uint64_t res, acc = 0;
 	int rem;
-	//struct device *dev = &fd->fmc->dev;
+	struct device *dev = &fd->fmc->dev;
 
-	//results = kmalloc(n * sizeof(*results), GFP_KERNEL);
-	results = malloc(n * sizeof(*results));
-	
+	results = kmalloc(n * sizeof(*results), GFP_KERNEL);
 	if (!results)
 		return -ENOMEM;
 
-	printk("Disable the output for the channel being calibrated\n");
 	/* Disable the output for the channel being calibrated */
 	fd_gpio_clr(fd, FD_GPIO_OUTPUT_EN(FD_CH_EXT(ch)));
 
-	printk("Enable the stop input in ACAM for the channel being calibrated\n");
 	/* Enable the stop input in ACAM for the channel being calibrated */
 	acam_writel(fd, AR0_TRiseEn(0) | AR0_TRiseEn(FD_CH_EXT(ch))
-	
 		    | AR0_HQSel | AR0_ROsc, 0);
 
-	printk("Program the output delay line setpoint\n");
 	/* Program the output delay line setpoint */
 	fd_ch_writel(fd, ch, fine, FD_REG_FRR);
 	fd_ch_writel(fd, ch, FD_DCR_ENABLE | FD_DCR_MODE | FD_DCR_UPDATE,
@@ -104,34 +90,26 @@ static uint64_t output_delay_ps(struct fd_dev *fd, int ch, int fine, int n,
 	 * the accuracy of calibration measurements
 	 */
 	fd_writel(fd, FD_CALR_PSEL_W(1 << ch), FD_REG_CALR);
-	//udelay(1);
-	timer_delay(0.001);
+	udelay(1);
 
 	/* Do n_avgs single measurements and average */
 	for (i = 0; i < n; i++) {
 		uint32_t fr;
 		/* Re-arm the ACAM (it's working in a single-shot mode) */
 		fd_writel(fd, FD_TDCSR_ALUTRIG, FD_REG_TDCSR);
-		//udelay(1);
-		timer_delay(0.001);
+		udelay(1);
 		/* Produce a calib pulse on the TDC start and the output ch */
 		fd_writel(fd, FD_CALR_CAL_PULSE |
 			  FD_CALR_PSEL_W(1 << ch), FD_REG_CALR);
-		//udelay(1);
-		timer_delay(0.001);
+		udelay(1);
 		/* read the tag, convert to picoseconds (fixed point: 16.16) */
 		fr = acam_readl(fd, 8 /* fifo */) & 0x1ffff;
 
 		res = fr * fd->bin;
-		/*if (fd->verbose > 3){
-			mprintf(, "%s: ch %i, fine %i, bin %x got %08x, "
+		if (fd->verbose > 3)
+			dev_info(dev, "%s: ch %i, fine %i, bin %x got %08x, "
 				 "res 0x%016llx\n", __func__, ch, fine,
 				 fd->bin, fr, res);
-
-			/*dev_info(dev, "%s: ch %i, fine %i, bin %x got %08x, "
-				 "res 0x%016llx\n", __func__, ch, fine,
-				 fd->bin, fr, res);
-			 }*/
 		results[i] = res;
 		acc += res;
 	}
@@ -147,13 +125,12 @@ static uint64_t output_delay_ps(struct fd_dev *fd, int ch, int fine, int n,
 			if (results[i] > stats->max) stats->max = results[i];
 			if (results[i] < stats->min) stats->min = results[i];
 		}
-		/*if (fd->verbose > 2)
+		if (fd->verbose > 2)
 			dev_info(dev, "%s: ch %i, taps %i, count %i, result %llx "
 				 "(max-min %llx)\n", __func__, ch, fine, n,
-				 stats->avg, stats->max - stats->min);*/
+				 stats->avg, stats->max - stats->min);
 	}
-	//kfree(results
-	free(results);
+	kfree(results);
 
 	return acc;
 }
@@ -169,7 +146,7 @@ static int fd_find_8ns_tap(struct fd_dev *fd, int ch)
 	int l = 0, mid, r = FD_NUM_TAPS - 1;
 	uint64_t bias, dly;
 	struct delay_stats stats;
-	//struct device *dev = &fd->fmc->dev;
+	struct device *dev = &fd->fmc->dev;
 
 	/*
 	 * Measure the delay at zero setting, so it can be further
@@ -180,14 +157,14 @@ static int fd_find_8ns_tap(struct fd_dev *fd, int ch)
 	while( r - l > 1) {
 		mid = ( l + r) / 2;
 		dly = output_delay_ps(fd, ch, mid, FD_CAL_STEPS, &stats) - bias;
-		/*if (fd->verbose > 1) {
+		if (fd->verbose > 1) {
 			dev_info(dev, "%s: ch%i @ %-5i: ", __func__, ch, mid);
 			__pr_fixed("bias ", bias, ", ");
 			__pr_fixed("min ", stats.min - bias, ", ");
 			__pr_fixed("avg ", stats.avg - bias, ", ");
 			__pr_fixed("max ", stats.max - bias, "\n");
-		}*/
-		
+		}
+
 		if(dly < 8000 << 16)
 			l = mid;
 		else
@@ -207,8 +184,6 @@ int fd_calibrate_outputs(struct fd_dev *fd)
 
 	if ((ret = acam_test_delay_transfer_function(fd)) < 0)
 		return ret;
-		
-	mprintf("ret not returned\n");
 
 	fd_read_temp(fd, 0);
 	fitted = fd_eval_polynomial(fd);
@@ -221,34 +196,30 @@ int fd_calibrate_outputs(struct fd_dev *fd)
 		fd_ch_writel(fd, ch, new, FD_REG_FRR);
 		fd->ch[ch].frr_cur = new;
 		if (1) {
-			mprintf( "fd_calibrate_outputs: ch%i: 8ns @%i (f %i, off %i, t %i.%02i)\n",
-				 FD_CH_EXT(ch), new, fitted, fd->ch[ch].frr_offset,
-				 fd->temp / 16, (fd->temp & 0xf) * 100 / 16);
-				 
-			/*dev_info(&fd->fmc->dev,
+			dev_info(&fd->fmc->dev,
 				 "%s: ch%i: 8ns @%i (f %i, off %i, t %i.%02i)\n",
 				 __func__, FD_CH_EXT(ch),
 				 new, fitted, fd->ch[ch].frr_offset,
-				 fd->temp / 16, (fd->temp & 0xf) * 100 / 16);*/
+				 fd->temp / 16, (fd->temp & 0xf) * 100 / 16);
 		}
 	}
 	return 0;
 }
 
 /* Called from a timer any few seconds */
-/*void fd_update_calibration(unsigned long arg)
+void fd_update_calibration(unsigned long arg)
 {
 	struct fd_dev *fd = (void *)arg;
 	int ch, fitted, new;
 
-	fd_read_temp(fd, 0 /* not verbose );
+	fd_read_temp(fd, 0 /* not verbose */);
 	fitted = fd_eval_polynomial(fd);
 
 	for (ch = FD_CH_1; ch <= FD_CH_LAST; ch++) {
 		new = fitted + fd->ch[ch].frr_offset;
 		fd_ch_writel(fd, ch, new, FD_REG_FRR);
 		fd->ch[ch].frr_cur = new;
-		if (0) {
+		if (1) {
 			dev_info(&fd->fmc->dev,
 				 "%s: ch%i: 8ns @%i (f %i, off %i, t %i.%02i)\n",
 				 __func__, FD_CH_EXT(ch),
@@ -258,5 +229,5 @@ int fd_calibrate_outputs(struct fd_dev *fd)
 	}
 
 	mod_timer(&fd->temp_timer, jiffies + HZ * fd_calib_period_s);
-}*/
+}
 

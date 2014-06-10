@@ -12,4 +12,4 @@
 #error "Not big endian, or unknown endianness"
 #endif
 
-static inline uint16_t ntohs(uint16_t x) {return x;}
+//static inline uint16_t ntohs(uint16_t x) {return x;}

@@ -7,12 +7,24 @@
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
-#include "fmc-bus_abstraction_layer.h"
-#include "spec-sw_abstraction_layer.h"
+#include "fmc.h"
+#include "spec.h"
 #include <errno.h>
+#include "timer.h"
+#include "hw/tics.h"
+
+#include <sys/types.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <kernel2lm32_layer.h>
+
+#include <pp-printf.h>
+#define SDBFS_BIG_ENDIAN
+#define printk pp_printf
 
 extern unsigned char *BASE_FINE_DELAY;
 extern unsigned char *BASE_UART;
+#define KBUILD_MODNAME "Fine Delay - Stand Alone Mode"
 
 /*
  * ZIO concatenates device, cset and channel extended attributes in the 32
@@ -189,15 +201,15 @@ struct fd_sw_fifo {
 
 /* This is the device we use all around */
 struct fd_dev {
-	//spinlock_t lock;
+	int lock;
 	//unsigned long flags;
 	unsigned char * fd_regs_base;		/* sdb_find_device(cern, f19ede1a) */
 	unsigned char * fd_owregs_base;		/* regs_base + 0x500 */
 	//int fd_vic_base;		/* sdb_find_device(cern, 00000013) */
-	struct fmc_device *fmc; //Wrong type, made only for coherence
+	struct fmc_device *fmc;
 	//struct zio_device *zdev, *hwzdev;
 	//struct timer_list fifo_timer;
-	//struct timer_list temp_timer;
+	struct timer_list temp_timer;
 	//struct tasklet_struct tlet;
 	struct fd_calibration calib;	/* a copy of what we have in flash */
 	struct fd_ch ch[FD_CH_NUMBER];
@@ -226,7 +238,7 @@ enum fd_flags {
 	FD_FLAG_WR_MODE,
 };
 
-extern uint64_t div_u64_rem(uint64_t n, uint32_t base, uint32_t *remainder);
+//extern uint64_t div_u64_rem(uint64_t n, uint32_t base, uint32_t *remainder);
 
 /* Split a pico value into coarse and frac */
 static inline void fd_split_pico(uint64_t pico,
@@ -257,7 +269,7 @@ static inline void fmc_writel(struct fmc_device *fmc, uint32_t val, int off)
 
 static inline uint32_t fd_readl(struct fd_dev *fd, unsigned long reg)
 {
-	return fmc_readl(NULL, fd->fd_regs_base + reg);
+	return fmc_readl(fd->fmc, fd->fd_regs_base + reg);
 	/*unsigned long  *p=fd->fd_regs_base + reg;
 	//mprintf(" [READ]: Dir %08X val %08X\n", p, *p);
 	return *p;*/
@@ -269,7 +281,7 @@ static inline void fd_writel(struct fd_dev *fd, uint32_t v, unsigned long reg)
 	*p = v;*/
 	
 	//mprintf("[WRITE]: Dir %08X val %08X\n", p, *p);
-	fmc_writel(NULL, v, fd->fd_regs_base + reg);
+	fmc_writel(fd->fmc, v, fd->fd_regs_base + reg);
 }
 
 static inline void __check_chan(int x)
@@ -415,13 +427,10 @@ extern void fd_spec_exit(void);
 /* Functions exported by i2c.c */
 extern int fd_i2c_init(struct fd_dev *fd);
 extern void fd_i2c_exit(struct fd_dev *fd);
-extern int fd_read_calibration_eeprom(struct fmc_device *fmc,
-				      struct fd_calibration *calib);
 extern int fd_eeprom_read(struct fd_dev *fd, int i2c_addr, uint32_t offset,
 			 void *buf, size_t size);
 extern int fd_eeprom_write(struct fd_dev *fd, int i2c_addr, uint32_t offset,
 			void *buf, size_t size);
-extern void dumpstruct(char *name, void *ptr, int size);
 
 /* Function exported by calibration.c */
 int fd_handle_eeprom_calibration(struct fd_dev *fd);

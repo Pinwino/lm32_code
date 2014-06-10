@@ -224,7 +224,7 @@ void parse_width(struct fdelay_pulse *p, char *s)
 }
 */
 
-int cmd_fmc_fdelay_pulse(int argc, char **argv)
+int cmd_fmc_fdelay_pulse(char **argv)
 {
 	/*struct fdelay_board *b;
 	int nboards;
