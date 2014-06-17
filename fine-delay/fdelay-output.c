@@ -29,6 +29,8 @@
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 extern int __fd_zio_output(struct fd_dev *fd, int index1_4, uint32_t *attrs);
 extern int fd_zio_output(struct fd_dev *fd, int channel, uint32_t *a);
+extern int fd_zio_info_output(struct fd_dev *fd, int ch, enum fd_zattr_in_idx option, uint32_t *usr_val);
+
 
 
 extern struct fd_dev fd;
@@ -147,13 +149,17 @@ int fdelay_config_pulse(int channel, struct fdelay_pulse *pulse)
 	return 0;
 }
 
-/*static void fdelay_add_ps(struct fdelay_time *p, uint64_t ps)
+static void fdelay_add_ps(struct fdelay_time *p, uint64_t ps)
 {
-	uint32_t coarse, frac;
+	uint32_t coarse, frac, aux;
 
-	/* FIXME: this silently fails with ps > 10^12 = 1s *
-	coarse = ps / 8000;
-	frac = ((ps % 8000) << 12) / 8000;
+	/* FIXME: this silently fails with ps > 10^12 = 1s */
+	//coarse = ps / 8000;
+	coarse = div_u64_rem(ps, 8000, frac);
+	//frac = ((ps % 8000) << 12) / 8000;
+	frac = div_u64_rem(ps << 12, 8000, aux);
+	
+	
 
 	p->frac += frac;
 	if (p->frac >= 4096) {
@@ -169,11 +175,13 @@ int fdelay_config_pulse(int channel, struct fdelay_pulse *pulse)
 
 static void fdelay_sub_ps(struct fdelay_time *p, uint64_t ps)
 {
-	uint32_t coarse_neg, frac_neg;
+	uint32_t coarse_neg, frac_neg, aux;
 
-	/* FIXME: this silently fails with ps > 10^12 = 1s *
-	coarse_neg = ps / 8000;
-	frac_neg = ((ps % 8000) << 12) / 8000;
+	/* FIXME: this silently fails with ps > 10^12 = 1s */
+	//coarse_neg = ps / 8000;
+	coarse_neg = div_u64_rem(ps, 8000, frac_neg);
+	//frac_neg = ((ps % 8000) << 12) / 8000;
+	frac_neg = div_u64_rem(ps << 12, 8000, aux);
 
 	if (p->frac < frac_neg) {
 		p->frac += 4096;
@@ -212,61 +220,49 @@ int fdelay_config_pulse_ps(struct fdelay_board *userb,
 }
 
 int fdelay_get_config_pulse(struct fdelay_board *userb,
-				int channel, struct fdelay_pulse *pulse)
+				int channel, struct fdelay_pulse *pulse)*/
+int fdelay_get_config_pulse(struct fd_dev *fd, int channel, struct fdelay_pulse *pulse)
 {
-	__define_board(b, userb);
-	char s[32];
+	//__define_board(b, userb);
+	//uint32_t a[MAX_EXT_ATTR];
 	uint32_t utc_h, utc_l, tmp;
 	uint32_t input_offset, output_offset, output_user_offset;
 
 	memset(pulse, 0, sizeof(struct fdelay_pulse));
 
-	sprintf(s,"fd-ch%i/%s", channel + 1, "mode");
-	if (fdelay_sysfs_get(b, s, &tmp) < 0)
-		return -1; /* errno already set *
+	if (fd_zio_info_output(fd, channel, FD_ATTR_OUT_MODE, &tmp)<0)
+		return -1; /* errno already set */
 	pulse->mode = tmp;
-	sprintf(s,"fd-ch%i/%s", channel + 1, "rep");
-	if (fdelay_sysfs_get(b, s, &tmp) < 0)
+	if (fd_zio_info_output(fd, channel, FD_ATTR_OUT_REP, &tmp)<0)
 		return -1;
 	pulse->rep = tmp;
 
-	sprintf(s,"fd-ch%i/%s", channel + 1, "start-h");
-	if (fdelay_sysfs_get(b, s, &utc_h) < 0)
+	if (fd_zio_info_output(fd, channel, FD_ATTR_OUT_START_H, &utc_h)<0)
 		return -1;
-	sprintf(s,"fd-ch%i/%s", channel + 1, "start-l");
-	if (fdelay_sysfs_get(b, s, &utc_l) < 0)
+	if (fd_zio_info_output(fd, channel, FD_ATTR_OUT_START_L, &utc_l)<0)
 		return -1;
 	pulse->start.utc = (((uint64_t)utc_h) << 32) | utc_l;
-	sprintf(s,"fd-ch%i/%s", channel + 1, "start-coarse");
-	if (fdelay_sysfs_get(b, s, &pulse->start.coarse) < 0)
+	if (fd_zio_info_output(fd, channel, FD_ATTR_OUT_START_COARSE, &pulse->start.coarse)<0)
 		return -1;
-	sprintf(s,"fd-ch%i/%s", channel + 1, "start-fine");
-	if (fdelay_sysfs_get(b, s, &pulse->start.frac) < 0)
+	if (fd_zio_info_output(fd, channel, FD_ATTR_OUT_START_FINE, &pulse->start.frac)<0)
 		return -1;
 
-	sprintf(s,"fd-ch%i/%s", channel + 1, "end-h");
-	if (fdelay_sysfs_get(b, s, &utc_h) < 0)
+	if (fd_zio_info_output(fd, channel, FD_ATTR_OUT_END_H, &utc_h)<0)
 		return -1;
-	sprintf(s,"fd-ch%i/%s", channel + 1, "end-l");
-	if (fdelay_sysfs_get(b, s, &utc_l) < 0)
+	if (fd_zio_info_output(fd, channel, FD_ATTR_OUT_END_L, &utc_l)<0)
 		return -1;
 	pulse->end.utc = (((uint64_t)utc_h) << 32) | utc_l;
-	sprintf(s,"fd-ch%i/%s", channel + 1, "end-coarse");
-	if (fdelay_sysfs_get(b, s, &pulse->end.coarse) < 0)
+	if (fd_zio_info_output(fd, channel, FD_ATTR_OUT_END_COARSE, &pulse->end.coarse)<0)
 		return -1;
-	sprintf(s,"fd-ch%i/%s", channel + 1, "end-fine");
-	if (fdelay_sysfs_get(b, s, &pulse->end.frac) < 0)
+	if (fd_zio_info_output(fd, channel, FD_ATTR_OUT_END_FINE, &pulse->end.frac)<0)
 		return -1;
 
-	sprintf(s,"fd-ch%i/%s", channel + 1, "delta-l");
-	if (fdelay_sysfs_get(b, s, &utc_l) < 0)
+	if (fd_zio_info_output(fd, channel, FD_ATTR_OUT_DELTA_L, &utc_l)<0)
 		return -1;
 	pulse->loop.utc = utc_l;
-	sprintf(s,"fd-ch%i/%s", channel + 1, "delta-coarse");
-	if (fdelay_sysfs_get(b, s, &pulse->loop.coarse) < 0)
+	if (fd_zio_info_output(fd, channel, FD_ATTR_OUT_DELTA_COARSE, &pulse->loop.coarse) < 0)
 		return -1;
-	sprintf(s,"fd-ch%i/%s", channel + 1, "delta-fine");
-	if (fdelay_sysfs_get(b, s, &pulse->loop.frac) < 0)
+	if (fd_zio_info_output(fd, channel, FD_ATTR_OUT_DELTA_FINE, &pulse->loop.frac) < 0)
 		return -1;
 
 	/*
@@ -284,12 +280,12 @@ int fdelay_get_config_pulse(struct fdelay_board *userb,
 	sprintf(s,"fd-input/%s", "offset");
 	if (fdelay_sysfs_get(b, s, &input_offset) < 0)
 		return -1;
-
+*/
 	int m = pulse->mode & 0x7f;
 	switch(m)
 	{
 		case FD_OUT_MODE_DISABLED:
-		/* hack for Steen/COHAL: if channel is disabled, apply delay-mode offsets *
+		/* hack for Steen/COHAL: if channel is disabled, apply delay-mode offsets */
 		case FD_OUT_MODE_DELAY:
 		fdelay_add_signed_ps(&pulse->start, -(signed)output_offset);
 		fdelay_add_signed_ps(&pulse->end, -(signed)output_offset);
@@ -330,13 +326,13 @@ int fdelay_get_config_pulse_ps(struct fdelay_board *userb,
 	ps->mode = pulse.mode;
 	ps->rep = pulse.rep;
 	ps->start = pulse.start;
-	/* FIXME: subtraction can be < 0 *
+	/* FIXME: subtraction can be < 0 */
 	fdelay_subtract_ps(&pulse.end, &pulse.start, (int64_t *)&ps->length);
 	fdelay_time_to_pico(&pulse.loop, &ps->period);
 
 	return 0;
 }
-int fdelay_has_triggered(struct fdelay_board *userb, int channel)
+/*int fdelay_has_triggered(struct fdelay_board *userb, int channel)
 {
 	__define_board(b, userb);
 	char s[32];

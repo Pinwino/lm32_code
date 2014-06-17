@@ -141,29 +141,29 @@ int fd_zio_info_tdc(struct fd_dev *fd, enum fd_zattr_in_idx option,
 	return 0;
 }
 
-/* output channel: only the two offsets *
-static int fd_zio_info_output(struct device *dev, struct zio_attribute *zattr,
-			     uint32_t *usr_val)
+/* output channel: only the two offsets */
+//static int fd_zio_info_output(struct device *dev, struct zio_attribute *zattr, uint32_t *usr_val)
+int fd_zio_info_output(struct fd_dev *fd, int ch, enum fd_zattr_in_idx option, uint32_t *usr_val)
 {
 	printk("--*%s\n", __func__);
-	struct zio_cset *cset;
-	struct fd_dev *fd;
-	int ch;
+	//struct zio_cset *cset;
+	//struct fd_dev *fd;
+	//int ch;
 
-	cset = to_zio_cset(dev);
+	/*cset = to_zio_cset(dev);
 	ch = cset->index - 1;
-	fd = cset->zdev->priv_d;
+	fd = cset->zdev->priv_d;*/
 
-	if (zattr->id == FD_ATTR_OUT_DELAY_OFF) {
+	if (option == FD_ATTR_OUT_DELAY_OFF) {
 		*usr_val = fd->calib.zero_offset[ch];
 		return 0;
 	}
-	if (zattr->id == FD_ATTR_OUT_USER_OFF) {
+	if (option == FD_ATTR_OUT_USER_OFF) {
 		*usr_val = fd->ch_user_offset[ch];
 		return 0;
 	}
-	/* Reading the mode tells the current mode and whether it triggered or not *
-	if (zattr->id == FD_ATTR_OUT_MODE) {
+	/* Reading the mode tells the current mode and whether it triggered or not */
+	if (option == FD_ATTR_OUT_MODE) {
 		uint32_t dcr = fd_ch_readl(fd, ch, FD_REG_DCR);
 		if(! (dcr & FD_DCR_ENABLE))
 		    *usr_val = FD_OUT_MODE_DISABLED;
@@ -177,54 +177,54 @@ static int fd_zio_info_output(struct device *dev, struct zio_attribute *zattr,
 		return 0;
 	}
 
-	/* readout of output config delays *
-	if (zattr->id == FD_ATTR_OUT_START_H) {
+	/* readout of output config delays */
+	if (option == FD_ATTR_OUT_START_H) {
 		*usr_val = fd_ch_readl(fd, ch, FD_REG_U_STARTH);
 		return 0;
 	}
-	if (zattr->id == FD_ATTR_OUT_START_L) {
+	if (option == FD_ATTR_OUT_START_L) {
 		*usr_val = fd_ch_readl(fd, ch, FD_REG_U_STARTL);
 		return 0;
 	}
-	if (zattr->id == FD_ATTR_OUT_START_COARSE) {
+	if (option == FD_ATTR_OUT_START_COARSE) {
 		*usr_val = fd_ch_readl(fd, ch, FD_REG_C_START);
 		return 0;
 	}
-	if (zattr->id == FD_ATTR_OUT_START_FINE) {
+	if (option == FD_ATTR_OUT_START_FINE) {
 		*usr_val = fd_ch_readl(fd, ch, FD_REG_F_START);
 		return 0;
 	}
 
-	if (zattr->id == FD_ATTR_OUT_END_H) {
+	if (option == FD_ATTR_OUT_END_H) {
 		*usr_val = fd_ch_readl(fd, ch, FD_REG_U_ENDH);
 		return 0;
 	}
-	if (zattr->id == FD_ATTR_OUT_END_L) {
+	if (option == FD_ATTR_OUT_END_L) {
 		*usr_val = fd_ch_readl(fd, ch, FD_REG_U_ENDL);
 		return 0;
 	}
-	if (zattr->id == FD_ATTR_OUT_END_COARSE) {
+	if (option == FD_ATTR_OUT_END_COARSE) {
 		*usr_val = fd_ch_readl(fd, ch, FD_REG_C_END);
 		return 0;
 	}
-	if (zattr->id == FD_ATTR_OUT_END_FINE) {
+	if (option == FD_ATTR_OUT_END_FINE) {
 		*usr_val = fd_ch_readl(fd, ch, FD_REG_F_END);
 		return 0;
 	}
 
-	if (zattr->id == FD_ATTR_OUT_DELTA_L) {
+	if (option == FD_ATTR_OUT_DELTA_L) {
 		*usr_val = fd_ch_readl(fd, ch, FD_REG_U_DELTA);
 		return 0;
 	}
-	if (zattr->id == FD_ATTR_OUT_DELTA_COARSE) {
+	if (option == FD_ATTR_OUT_DELTA_COARSE) {
 		*usr_val = fd_ch_readl(fd, ch, FD_REG_C_DELTA);
 		return 0;
 	}
-	if (zattr->id == FD_ATTR_OUT_DELTA_FINE) {
+	if (option == FD_ATTR_OUT_DELTA_FINE) {
 		*usr_val = fd_ch_readl(fd, ch, FD_REG_F_DELTA);
 		return 0;
 	}
-	if (zattr->id == FD_ATTR_OUT_REP) {
+	if (option == FD_ATTR_OUT_REP) {
 		uint32_t rcr = fd_ch_readl(fd, ch, FD_REG_RCR);
 		if(rcr & FD_RCR_CONT)
 		    	*usr_val = 0xffffffff;
@@ -234,7 +234,7 @@ static int fd_zio_info_output(struct device *dev, struct zio_attribute *zattr,
 	}
 
 	return 0;
-}*/
+}
 
 /*static int fd_wr_mode(struct fd_dev *fd, int on)
 {
