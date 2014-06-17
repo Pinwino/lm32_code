@@ -106,7 +106,7 @@ enum fd_zattr_out_idx {
 	FD_ATTR_OUT_USER_OFF,
 	FD_ATTR_OUT__LAST,
 };
-enum fd_output_mode {
+enum fd_output_mode{
 	FD_OUT_MODE_DISABLED = 0,
 	FD_OUT_MODE_DELAY,
 	FD_OUT_MODE_PULSE,
@@ -298,14 +298,16 @@ static inline void __check_chan(int x)
 static inline uint32_t fd_ch_readl(struct fd_dev *fd, int ch,
 				   unsigned long reg)
 {
-	__check_chan(ch);
+	//__check_chan(ch);
+	mprintf("ch = %i addres %08x\n", ch, 0x100 + ch * 0x100 + reg);
 	return fd_readl(fd, 0x100 + ch * 0x100 + reg);
 }
 
 static inline void fd_ch_writel(struct fd_dev *fd, int ch,
 				uint32_t v, unsigned long reg)
 {
-	__check_chan(ch);
+	//__check_chan(ch);
+	mprintf("ch = %i value %08x addres %08x\n", ch, v, 0x100 + ch * 0x100 + reg);
 	fd_writel(fd ,v, 0x100 + ch * 0x100 + reg);
 }
 
@@ -320,6 +322,12 @@ enum fd_acam_modes {
 	ACAM_RMODE,
 	ACAM_IMODE,
 	ACAM_GMODE
+};
+
+enum fd_devtype {
+	FD_TYPE_WHOLEDEV,
+	FD_TYPE_INPUT,
+	FD_TYPE_OUTPUT,
 };
 
 /*

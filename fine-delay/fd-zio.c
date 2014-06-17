@@ -32,7 +32,7 @@
 #define NSEC_PER_SEC 1000000000;
 
 #define _RW_ (S_IRUGO | S_IWUGO) /* I want 80-col lines so this lazy thing */
-extern struct fd_dev fd;;
+extern struct fd_dev fd;
 
 static int fd_use_raw_tdc;
 
@@ -88,7 +88,7 @@ static struct zio_attribute fd_zattr_output[] = {
 };
 
 
-/* This identifies if our "struct device" is device, input, output */
+/* This identifies if our "struct device" is device, input, output *
 enum fd_devtype {
 	FD_TYPE_WHOLEDEV,
 	FD_TYPE_INPUT,
@@ -109,21 +109,24 @@ enum fd_devtype {
 }*/
 
 /* TDC input attributes: only the user offset is special */
-/*static int fd_zio_info_tdc(struct device *dev, struct zio_attribute *zattr,
+int fd_zio_info_tdc(struct fd_dev *fd, enum fd_zattr_in_idx option,
 			     uint32_t *usr_val)
 {
 	printk("--*%s\n", __func__);
-	struct zio_cset *cset;
-	struct fd_dev *fd;
+	//struct zio_cset *cset;
+	//struct fd_dev *fd;
 
-	cset = to_zio_cset(dev);
-	fd = cset->zdev->priv_d;
+	//cset = to_zio_cset(dev);
+	//fd = cset->zdev->priv_d;
+	printk("%i\n", option);
 
-	if (zattr->id == FD_ATTR_TDC_USER_OFF) {
+	if (option == FD_ATTR_TDC_USER_OFF) {
+		printk("FD_ATTR_TDC_USER_OFF\n");
 		*usr_val = fd->tdc_user_offset;
 		return 0;
 	}
-	if (zattr->id == FD_ATTR_TDC_FLAGS) {
+	if (option == FD_ATTR_TDC_FLAGS) {
+		printk("FD_ATTR_TDC_FLAGS\n");
 		*usr_val = fd->tdc_flags;
 		return 0;
 	}
@@ -131,9 +134,9 @@ enum fd_devtype {
 	 * Following code is about TDC values, for the last TDC event.
 	 * For efficiency reasons at read_fifo() time, we store an
 	 * array of integers instead of filling attributes, so here
-	 * pick the values from our array.
-	 *
-	*usr_val = fd->tdc_attrs[FD_CSET_INDEX(zattr->id)];
+	 * pick the values from our array.*
+	 */
+	//usr_val = fd->tdc_attrs[FD_CSET_INDEX(zattr->id)];
 
 	return 0;
 }
@@ -317,39 +320,48 @@ static int fd_zio_info_get(struct device *dev, struct zio_attribute *zattr,
 }
 
 /* TDC input attributes: the flags */
-/*static int fd_zio_conf_tdc(struct device *dev, struct zio_attribute *zattr,
-			    uint32_t  usr_val)
+
+/*int fd_zio_conf_tdc(struct device *dev, struct zio_attribute *zattr,
+			    uint32_t  usr_val)*/
+int fd_zio_conf_tdc(struct fd_dev *fd, enum fd_zattr_in_idx option,
+			     uint32_t usr_val)	
 {
 	printk("--*%s\n", __func__);
-	struct zio_cset *cset;
-	struct fd_dev *fd;
+	//struct zio_cset *cset;
+	//struct fd_dev *fd;
 	uint32_t reg;
 	int change;
 
-	cset = to_zio_cset(dev);
-	fd = cset->zdev->priv_d;
+	printk("%i\n", option);
+	//cset = to_zio_cset(dev);
+	//fd = cset->zdev->priv_d;
 
-	switch (zattr->id) {
+	switch (option) {
 	case FD_ATTR_TDC_OFFSET:
+		printk("FD_ATTR_TDC_OFFSET\n");
 		fd->calib.tdc_zero_offset = usr_val;
 		goto out;
 
 	case FD_ATTR_TDC_USER_OFF:
+		printk("FD_ATTR_TDC_USER_OFF\n");
 		fd->tdc_user_offset = usr_val;
 		goto out;
 
 	case FD_ATTR_TDC_FLAGS:
-		break; /* code below *
+		printk("FD_ATTR_TDC_FLAGS\n");
+		break; /* code below */
 	default:
 		goto out;
 	}
 
-	/* This code is only about FD_ATTR_TDC_FLAGS *
-	change = fd->tdc_flags ^ usr_val; /* old xor new *
+	/* This code is only about FD_ATTR_TDC_FLAGS */
+	change = fd->tdc_flags ^ usr_val; /* old xor new */
+	printk("%i ^ %i = %i\n", fd->tdc_flags, usr_val, change);
 
-	/* No need to lock, as configuration is serialized by zio-core *
+	/* No need to lock, as configuration is serialized by zio-core */
 	if (change & FD_TDCF_DISABLE_INPUT) {
 		reg = fd_readl(fd, FD_REG_GCR);
+		printk("%08x\n", change & FD_TDCF_DISABLE_INPUT);
 		if (usr_val & FD_TDCF_DISABLE_INPUT)
 			reg &= ~FD_GCR_INPUT_EN;
 		else
@@ -358,6 +370,7 @@ static int fd_zio_info_get(struct device *dev, struct zio_attribute *zattr,
 	}
 
 	if (change & FD_TDCF_DISABLE_TSTAMP) {
+		printk("%08x\n", change & FD_TDCF_DISABLE_TSTAMP);
 		reg = fd_readl(fd, FD_REG_TSBCR);
 		if (usr_val & FD_TDCF_DISABLE_TSTAMP)
 			reg &= ~FD_TSBCR_ENABLE;
@@ -367,13 +380,18 @@ static int fd_zio_info_get(struct device *dev, struct zio_attribute *zattr,
 	}
 
 	if (change & FD_TDCF_TERM_50) {
-		if (usr_val & FD_TDCF_TERM_50)
+		printk("%08x\n", change & FD_TDCF_TERM_50);
+		if (usr_val & FD_TDCF_TERM_50){
+			mprintf("fd_gpio_set(fd, FD_GPIO_TERM_EN)\n");
 			fd_gpio_set(fd, FD_GPIO_TERM_EN);
-		else
+		}
+		else{
+			mprintf("fd_gpio_clr(fd, FD_GPIO_TERM_EN)\n");
 			fd_gpio_clr(fd, FD_GPIO_TERM_EN);
+		}
 	}
 out:
-	/* We need to store in the local array too (see info_tdc() above) *
+	/* We need to store in the local array too (see info_tdc() above) */
 	fd->tdc_flags = usr_val;
 
 	return 0;
@@ -699,9 +717,9 @@ int fd_zio_output(struct fd_dev *fd, int channel, uint32_t *a)
 	if (1) {
 		dev_info(&fd->fmc->dev,
 			 "%s: attrs for chanell %i: ", __func__, channel);
-		for (i = FD_ATTR_DEV__LAST; i < FD_ATTR_OUT__LAST; i++)
+		/*for (i = FD_ATTR_DEV__LAST; i < FD_ATTR_OUT__LAST; i++)
 			printk("%08x%c", a[i],
-			       i == FD_ATTR_OUT__LAST -1 ? '\n' : ' ');
+			       i == FD_ATTR_OUT__LAST -1 ? '\n' : ' ');*/
 	}
 	return __fd_zio_output(fd, channel, a);
 }
