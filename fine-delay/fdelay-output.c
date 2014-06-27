@@ -39,17 +39,31 @@ extern struct fd_dev fd;
 void fdelay_pico_to_time(uint64_t *pico, struct fdelay_time *time)
 {
 	uint64_t p = *pico;
+	uint64_t mul=1000 * 1000 * 1000 * 1000;
 
 	//time->utc = p / (1000ULL * 1000ULL * 1000ULL * 1000ULL);
 	//p %= (1000ULL * 1000ULL * 1000ULL * 1000ULL);
-	time->utc = div_u64_rem(p, 1000ULL * 1000ULL * 1000ULL * 1000ULL, p);
+	mprintf("%s\n", __func__);
+	
+	/*mul=mul_u64 (1000ULL, 1000ULL);
+	mul=mul_u64 (mul, 1000ULL);
+	mul=mul_u64 (mul, 1000ULL);*/
+	time->utc = div64_u64_rem(p, (1000ULL * 1000ULL * 1000ULL * 1000ULL), &p);
+	mprintf("1st %lu %lu\n", (unsigned long)(p >> 32),(unsigned long)p);
+	mprintf("1st %lu %lu\n", (unsigned long)(time->utc >> 32), (unsigned long)time->utc);
 	
 	//time->coarse = p / 8000;
 	//p %= 8000;
-	time->coarse = div_u64_rem(p, 8000, p);
+	time->coarse = (uint32_t) div64_u64_rem(p, 8000ULL, &p);
+	mprintf("2nd %lu %lu\n", (unsigned long)(p >> 32),(unsigned long)p);
+	mprintf("2nd %lu\n", time->coarse);
+	/*mprintf("2nd -> %llu\n", div64_u64_rem(p, 8000ULL, &p) << 32);
+	mprintf("2nd -> %llu\n", div64_u64_rem(p, 8000ULL, &p));*/
 	
 	//time->frac = p * 4096 / 8000;
-	time->frac = div_u64_rem(p * 4096, 8000, p);
+	time->frac = (uint32_t) div64_u64_rem((p * 4096), 8000ULL, &p);
+	mprintf("3rd %lu %lu\n", (unsigned long)(p >> 32),(unsigned long)p);
+	printf("3rd %lu\n", time->frac);
 }
 
 /*void fdelay_time_to_pico(struct fdelay_time *time, uint64_t *pico)
@@ -95,34 +109,34 @@ int fdelay_config_pulse(int channel, struct fdelay_pulse *pulse)
 	//a = (uint32_t *) malloc(sizeof(*pulse));
 	//a = ctrl.attr_channel.ext_val;
 	a[FD_ATTR_OUT_MODE] = pulse->mode & 0x7f;
-	fprintf(stderr, "** FD_ATTR_OUT_MODE = %08x\n", (pulse->mode & 0x7f));
+	//fprintf(stderr, "** FD_ATTR_OUT_MODE = %08x\n", (pulse->mode & 0x7f));
 	a[FD_ATTR_OUT_REP] = pulse->rep;
-	fprintf(stderr, "** FD_ATTR_OUT_REP = %08x\n", pulse->rep);
+	//fprintf(stderr, "** FD_ATTR_OUT_REP = %08x\n", pulse->rep);
 
 	a[FD_ATTR_OUT_START_H] = pulse->start.utc >> 32;
-	fprintf(stderr, "** FD_ATTR_OUT_START_H = %08x\n", a[FD_ATTR_OUT_START_H]);
+	//fprintf(stderr, "** FD_ATTR_OUT_START_H = %08x\n", a[FD_ATTR_OUT_START_H]);
 	a[FD_ATTR_OUT_START_L] = pulse->start.utc;
-	fprintf(stderr, "** FD_ATTR_OUT_START_L = %08x\n", a[FD_ATTR_OUT_START_L]);
+	//fprintf(stderr, "** FD_ATTR_OUT_START_L = %08x\n", a[FD_ATTR_OUT_START_L]);
 	a[FD_ATTR_OUT_START_COARSE] = pulse->start.coarse;
-	fprintf(stderr, "** FD_ATTR_OUT_START_COARSE = %08x\n", pulse->start.coarse);
+	//fprintf(stderr, "** FD_ATTR_OUT_START_COARSE = %08x\n", pulse->start.coarse);
 	a[FD_ATTR_OUT_START_FINE] = pulse->start.frac;
-	fprintf(stderr, "** FD_ATTR_OUT_START_FINE = %08x\n", pulse->start.frac);
+	//fprintf(stderr, "** FD_ATTR_OUT_START_FINE = %08x\n", pulse->start.frac);
 
 	a[FD_ATTR_OUT_END_H] = pulse->end.utc >> 32;
-	fprintf(stderr, "** FD_ATTR_OUT_END_H = %08x\n", a[FD_ATTR_OUT_END_H]);
+	//fprintf(stderr, "** FD_ATTR_OUT_END_H = %08x\n", a[FD_ATTR_OUT_END_H]);
 	a[FD_ATTR_OUT_END_L] = pulse->end.utc;
-	fprintf(stderr, "** FD_ATTR_OUT_END_L = %08x\n", a[FD_ATTR_OUT_END_L]);
+	//fprintf(stderr, "** FD_ATTR_OUT_END_L = %08x\n", a[FD_ATTR_OUT_END_L]);
 	a[FD_ATTR_OUT_END_COARSE] = pulse->end.coarse;
-	fprintf(stderr, "** FD_ATTR_OUT_END_COARSE = %08x\n",pulse->end.coarse);
+	//fprintf(stderr, "** FD_ATTR_OUT_END_COARSE = %08x\n",pulse->end.coarse);
 	a[FD_ATTR_OUT_END_FINE] = pulse->end.frac;
-	fprintf(stderr, "** FD_ATTR_OUT_END_FINE = %08x\n", pulse->end.frac);
+	//fprintf(stderr, "** FD_ATTR_OUT_END_FINE = %08x\n", pulse->end.frac);
 
 	a[FD_ATTR_OUT_DELTA_L] = pulse->loop.utc; /* only 0..f */
-	fprintf(stderr, "** FD_ATTR_OUT_DELTA_L = %08x\n", pulse->loop.utc);
+	//fprintf(stderr, "** FD_ATTR_OUT_DELTA_L = %08x\n", pulse->loop.utc);
 	a[FD_ATTR_OUT_DELTA_COARSE] = pulse->loop.coarse; /* only 0..f */
-	fprintf(stderr, "** FD_ATTR_OUT_DELTA_COARSE = %08x\n", pulse->loop.coarse);
+	//fprintf(stderr, "** FD_ATTR_OUT_DELTA_COARSE = %08x\n", pulse->loop.coarse);
 	a[FD_ATTR_OUT_DELTA_FINE] = pulse->loop.frac; /* only 0..f */
-	fprintf(stderr, "** FD_ATTR_OUT_DELTA_FINE = %08x\n", pulse->loop.frac);
+	//fprintf(stderr, "** FD_ATTR_OUT_DELTA_FINE = %08x\n", pulse->loop.frac);
 
 	int mode = pulse->mode & 0x7f;
 	
@@ -179,9 +193,9 @@ static void fdelay_sub_ps(struct fdelay_time *p, uint64_t ps)
 
 	/* FIXME: this silently fails with ps > 10^12 = 1s */
 	//coarse_neg = ps / 8000;
-	coarse_neg = div_u64_rem(ps, 8000, frac_neg);
+	coarse_neg = div_u64_rem(ps, 8000, &frac_neg);
 	//frac_neg = ((ps % 8000) << 12) / 8000;
-	frac_neg = div_u64_rem(ps << 12, 8000, aux);
+	frac_neg = div_u64_rem(frac_neg << 12, 8000, aux);
 
 	if (p->frac < frac_neg) {
 		p->frac += 4096;

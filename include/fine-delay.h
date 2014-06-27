@@ -13,6 +13,7 @@
 #include "timer.h"
 #include "hw/tics.h"
 
+
 #include <sys/types.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -24,7 +25,11 @@
 
 extern unsigned char *BASE_FINE_DELAY;
 extern unsigned char *BASE_UART;
+
 #define KBUILD_MODNAME "Fine Delay - Stand Alone Mode"
+#define test_bit(n,p) !!((p) & (1<<(n)))
+#define set_bit(n,p) ((p) |= (1 << (n)))
+#define clear_bit(n,p) ((p) &= (~(1) << (n)))
 
 /*
  * ZIO concatenates device, cset and channel extended attributes in the 32
@@ -202,7 +207,7 @@ struct fd_sw_fifo {
 /* This is the device we use all around */
 struct fd_dev {
 	int lock;
-	//unsigned long flags;
+	unsigned long flags;
 	unsigned char * fd_regs_base;		/* sdb_find_device(cern, f19ede1a) */
 	unsigned char * fd_owregs_base;		/* regs_base + 0x500 */
 	//int fd_vic_base;		/* sdb_find_device(cern, 00000013) */
@@ -238,7 +243,8 @@ enum fd_flags {
 	FD_FLAG_WR_MODE,
 };
 
-//extern uint64_t div_u64_rem(uint64_t n, uint32_t base, uint32_t *remainder);
+extern uint64_t div_u64_rem(uint64_t n, uint32_t base, uint32_t *remainder);
+//extern u64 div_u64_rem(u64 n, u32 base, u32 *remainder);
 
 /* Split a pico value into coarse and frac */
 static inline void fd_split_pico(uint64_t pico,
@@ -299,7 +305,7 @@ static inline uint32_t fd_ch_readl(struct fd_dev *fd, int ch,
 				   unsigned long reg)
 {
 	//__check_chan(ch);
-	mprintf("ch = %i addres %08x\n", ch, 0x100 + ch * 0x100 + reg);
+	//mprintf("ch = %i addres %08x\n", ch, 0x100 + ch * 0x100 + reg);
 	return fd_readl(fd, 0x100 + ch * 0x100 + reg);
 }
 
@@ -307,7 +313,7 @@ static inline void fd_ch_writel(struct fd_dev *fd, int ch,
 				uint32_t v, unsigned long reg)
 {
 	//__check_chan(ch);
-	mprintf("ch = %i value %08x addres %08x\n", ch, v, 0x100 + ch * 0x100 + reg);
+	//mprintf("ch = %i value %08x addres %08x\n", ch, v, 0x100 + ch * 0x100 + reg);
 	fd_writel(fd ,v, 0x100 + ch * 0x100 + reg);
 }
 
@@ -441,7 +447,7 @@ extern int fd_eeprom_write(struct fd_dev *fd, int i2c_addr, uint32_t offset,
 			void *buf, size_t size);
 
 /* Function exported by calibration.c */
-int fd_handle_eeprom_calibration(struct fd_dev *fd);
+extern int fd_handle_eeprom_calibration(struct fd_dev *fd);
 
 //#endif /* __KERNEL__ */
 #endif /* __FINE_DELAY_H__ */

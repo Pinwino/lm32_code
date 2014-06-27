@@ -1,0 +1,18 @@
+[  787.903904] *.*.*.* fd_zio_info_get
+[  787.903908] FD_ATTR_DEV_UTC_H
+[  787.903948] *.*.*.* fd_zio_info_get
+[  787.903950] FD_TYPE_INPUT
+[  787.903951] *.*.*.* fd_zio_info_tdc
+[  787.903953] FD_ATTR_TDC_FLAGS
+[  787.903981] *.*.*.* fd_zio_conf_set
+[  787.903983] FD_TYPE_INPUT
+[  787.903984] *.*.*.* fd_zio_conf_tdc
+[  828.645250] *.*.*.* fd_zio_info_get
+[  828.645255] FD_ATTR_DEV_UTC_H
+[  828.645291] *.*.*.* fd_zio_info_get
+[  828.645293] FD_TYPE_INPUT
+[  828.645294] *.*.*.* fd_zio_info_tdc
+[  828.645296] FD_ATTR_TDC_FLAGS
+[  828.645322] *.*.*.* fd_zio_conf_set
+[  828.645324] FD_TYPE_INPUT
+[  828.645325] *.*.*.* fd_zio_conf_tdc

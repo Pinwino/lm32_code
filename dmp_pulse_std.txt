@@ -1,0 +1,91 @@
+ch = 00000003, fd->ch[ch].frr_cur = 0000035f, FD_REG_FRR = 00000004
+ch = 00000003, attrs[00000008] = 00000000
+ch = 00000003, attrs[0000000b] = 0000000f
+ch = 00000003, attrs[0000000c] = 0773593f
+ch = 00000003, attrs[0000000d] = 00000347
+ch = 00000003, attrs[0000000e] = 00000000
+ch = 00000003, attrs[0000000f] = 00000010
+ch = 00000003, attrs[00000010] = 00000005
+ch = 00000003, attrs[00000011] = 00000347
+ch = 00000003, attrs[0000000b] = 00000000
+ch = 00000003, attrs[00000013] = 0000000c
+ch = 00000003, attrs[00000014] = 0000000f
+mode == FD_OUT_MODE_DELAY = 1, mode == FD_OUT_MODE_DISABLED = 0
+1st else
+NSEC_PER_SEC-8*0773593f-8*00000005=3b9aca00
+*-*-*- delta=0:96
+*-*-*- width=0:1000000000
+2nd else
+*-*-*--> width=0:1000000000
+*-*-*--> delta=-1:1000000000
+ch = 00000003, dcr = 00000082, FD_REG_DCR = 00000000
+ch = 00000003, dcr | FD_DCR_UPDATE = 00000092, FD_REG_DCR = 00000000
+**** Pulse done!!!!!!!!!!!
+WR-Dgb# pulse -o 3 -p                                                                                             
+fmc_fdelay_pulse with 3 arguments: -o
+fmc_fdelay_pulse with 3 arguments: 3
+fmc_fdelay_pulse with 3 arguments: -p
+...That's all folks!!!!
+Before : opt=0, optarg=SDB-, optind=0
+c vale o
+Exit on return c
+opt=o, optarg=3, optind=2
+c vale p
+Exit on return c
+opt=p, optarg=SDB-, optind=3
+if (optind == argc)
+After opt=-1, optarg=SDB-, optind=3
+------------------> is pulse!!!
+*************-*********-******
+Parsed times:
+0:070,000,000,000 ps
+0:000,000,010,000 ps
+0:001,000,000,000 ps
+Channel 3: pulse generator mode0:070,000,000,000 ps
+0:000,000,010,000 ps
+  repeat:                    infinite
+0:001,000,000,000 ps
+** FD_ATTR_OUT_MODE = 00000002
+** FD_ATTR_OUT_REP = ffffffff
+** FD_ATTR_OUT_START_H = 00000000
+** FD_ATTR_OUT_START_L = 00000046
+** FD_ATTR_OUT_START_COARSE = 00000000
+** FD_ATTR_OUT_START_FINE = 00000000
+** FD_ATTR_OUT_END_H = 00000000
+** FD_ATTR_OUT_END_L = 00000046
+** FD_ATTR_OUT_END_COARSE = 001312d0
+** FD_ATTR_OUT_END_FINE = 00000000
+** FD_ATTR_OUT_DELTA_L = 00000000
+** FD_ATTR_OUT_DELTA_COARSE = 00000000
+** FD_ATTR_OUT_DELTA_FINE = 00000000
+--*fd_zio_output
+Info: fd_zio_output: attrs for chanell 2: --*__fd_zio_output
+--*fd_apply_offset
+--*fd_attr_sub
+--*fd_apply_offset
+--*fd_apply_offset
+--*fd_attr_sub
+--*fd_apply_offset
+ch = 00000002, fd->ch[ch].frr_cur = 0000034f, FD_REG_FRR = 00000004
+ch = 00000002, attrs[00000008] = 00000000
+ch = 00000002, attrs[0000000b] = 00000045
+ch = 00000002, attrs[0000000c] = 0773593f
+ch = 00000002, attrs[0000000d] = 000003b5
+ch = 00000002, attrs[0000000e] = 00000000
+ch = 00000002, attrs[0000000f] = 00000046
+ch = 00000002, attrs[00000010] = 001312cf
+ch = 00000002, attrs[00000011] = 000003b5
+ch = 00000002, attrs[0000000b] = 00000001
+ch = 00000002, attrs[00000013] = 00000000
+ch = 00000002, attrs[00000014] = 00000045
+mode == FD_OUT_MODE_DELAY = 1, mode == FD_OUT_MODE_DISABLED = 0
+1st else
+NSEC_PER_SEC-8*0773593f-8*001312cf=3b9aca00
+*-*-*- delta=1:0
+*-*-*- width=0:1000000000
+2nd else
+*-*-*--> width=0:1000000000
+*-*-*--> delta=0:1000000000
+ch = 00000002, dcr = 00000082, FD_REG_DCR = 00000000
+ch = 00000002, dcr | FD_DCR_UPDATE = 00000092, FD_REG_DCR = 00000000
+**** Pulse done!!!!!!!!!!!

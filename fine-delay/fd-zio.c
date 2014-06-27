@@ -29,7 +29,7 @@
 #include "hw/fd_main_regs.h"
 #include "hw/fd_channel_regs.h"
 
-#define NSEC_PER_SEC 1000000000;
+#define NSEC_PER_SEC 1000*1000*1000
 
 #define _RW_ (S_IRUGO | S_IWUGO) /* I want 80-col lines so this lazy thing */
 extern struct fd_dev fd;
@@ -112,21 +112,21 @@ enum fd_devtype {
 int fd_zio_info_tdc(struct fd_dev *fd, enum fd_zattr_in_idx option,
 			     uint32_t *usr_val)
 {
-	printk("--*%s\n", __func__);
+	//printk("--*%s\n", __func__);
 	//struct zio_cset *cset;
 	//struct fd_dev *fd;
 
 	//cset = to_zio_cset(dev);
 	//fd = cset->zdev->priv_d;
-	printk("%i\n", option);
+	//printk("%i\n", option);
 
 	if (option == FD_ATTR_TDC_USER_OFF) {
-		printk("FD_ATTR_TDC_USER_OFF\n");
+		//printk("FD_ATTR_TDC_USER_OFF\n");
 		*usr_val = fd->tdc_user_offset;
 		return 0;
 	}
 	if (option == FD_ATTR_TDC_FLAGS) {
-		printk("FD_ATTR_TDC_FLAGS\n");
+		//printk("FD_ATTR_TDC_FLAGS\n");
 		*usr_val = fd->tdc_flags;
 		return 0;
 	}
@@ -145,7 +145,7 @@ int fd_zio_info_tdc(struct fd_dev *fd, enum fd_zattr_in_idx option,
 //static int fd_zio_info_output(struct device *dev, struct zio_attribute *zattr, uint32_t *usr_val)
 int fd_zio_info_output(struct fd_dev *fd, int ch, enum fd_zattr_in_idx option, uint32_t *usr_val)
 {
-	printk("--*%s\n", __func__);
+	//printk("--*%s\n", __func__);
 	//struct zio_cset *cset;
 	//struct fd_dev *fd;
 	//int ch;
@@ -236,39 +236,48 @@ int fd_zio_info_output(struct fd_dev *fd, int ch, enum fd_zattr_in_idx option, u
 	return 0;
 }
 
-/*static int fd_wr_mode(struct fd_dev *fd, int on)
+int fd_wr_mode(struct fd_dev *fd, int on)
 {
-	printk("--*%s\n", __func__);
+	//printk("--*%s\n", __func__);
 	unsigned long flags;
 	uint32_t tcr;
 
-	spin_lock_irqsave(&fd->lock, flags);
+	//printk("&fd->flags = 0x%08x, fd->flags = 0x%08x\n", &fd->flags, fd->flags);
+	//spin_lock_irqsave(&fd->lock, flags);
 	tcr = fd_readl(fd, FD_REG_TCR);
 
 	if (on) {
 		fd_writel(fd, FD_TCR_WR_ENABLE, FD_REG_TCR);
-		set_bit(FD_FLAG_WR_MODE, &fd->flags);
+		set_bit(FD_FLAG_WR_MODE, fd->flags);
 	} else {
 		fd_writel(fd, 0, FD_REG_TCR);
-		clear_bit(FD_FLAG_WR_MODE, &fd->flags);
-		/* not white-rabbit: write default to DAC for VCXO *
+		clear_bit(FD_FLAG_WR_MODE, fd->flags);
+		/* not white-rabbit: write default to DAC for VCXO */
 		fd_spi_xfer(fd, FD_CS_DAC, 24,
 			    fd->calib.vcxo_default_tune & 0xffff, NULL);
 	}
-
-	spin_unlock_irqrestore(&fd->lock, flags);
-	if(! (tcr & FD_TCR_WR_PRESENT))
+	
+	//printk("&fd->flags = 0x%08x, fd->flags = 0x%08x\n", &fd->flags, fd->flags);
+	//mprintf("tcr = %08x and FD_TCR_WR_PRESENT = %08x = %08x\n", tcr, FD_TCR_WR_PRESENT, !(tcr & FD_TCR_WR_PRESENT));
+	//mprintf("tcr = %08x and FD_TCR_WR_LINK = %08x = %08x\n", tcr, FD_TCR_WR_LINK, !(tcr & FD_TCR_WR_LINK));
+	//spin_unlock_irqrestore(&fd->lock, flags);
+	
+	if(! (tcr & FD_TCR_WR_PRESENT)){
+		//mprintf("EOPNOTSUPP\n");
 		return -EOPNOTSUPP;
-	else if( ! (tcr & FD_TCR_WR_LINK))
+	}
+	else if( ! (tcr & FD_TCR_WR_LINK)){
+		//mprintf("FD_TCR_WR_LINK\n");
 		return -ENOLINK;
+	}
 	else
 		return 0;
-}*/
+}
 
-/*static int fd_wr_query(struct fd_dev *fd)
+int fd_wr_query(struct fd_dev *fd)
 {
-	printk("--*%s\n", __func__);
-	int ena = test_bit(FD_FLAG_WR_MODE, &fd->flags);
+	////printk("--*%s\n", __func__);
+	int ena = test_bit(FD_FLAG_WR_MODE, fd->flags);
 
 	if (!ena)
 		return -ENODEV;
@@ -277,14 +286,14 @@ int fd_zio_info_output(struct fd_dev *fd, int ch, enum fd_zattr_in_idx option, u
 	if (fd_readl(fd, FD_REG_TCR) & FD_TCR_WR_LOCKED)
 		return 0;
 	return -EAGAIN;
-}*/
+}
 
 
 /* Overall and device-wide attributes: only get_time is special *
 static int fd_zio_info_get(struct device *dev, struct zio_attribute *zattr,
 			   uint32_t *usr_val)
 {
-	printk("--*%s\n", __func__);
+	//printk("--*%s\n", __func__);
 	struct fd_time t;
 	struct zio_device *zdev;
 	struct fd_dev *fd;
@@ -326,29 +335,29 @@ static int fd_zio_info_get(struct device *dev, struct zio_attribute *zattr,
 int fd_zio_conf_tdc(struct fd_dev *fd, enum fd_zattr_in_idx option,
 			     uint32_t usr_val)	
 {
-	printk("--*%s\n", __func__);
+	//printk("--*%s\n", __func__);
 	//struct zio_cset *cset;
 	//struct fd_dev *fd;
 	uint32_t reg;
 	int change;
 
-	printk("%i\n", option);
+	//printk("%i\n", option);
 	//cset = to_zio_cset(dev);
 	//fd = cset->zdev->priv_d;
 
 	switch (option) {
 	case FD_ATTR_TDC_OFFSET:
-		printk("FD_ATTR_TDC_OFFSET\n");
+		////printk("FD_ATTR_TDC_OFFSET\n");
 		fd->calib.tdc_zero_offset = usr_val;
 		goto out;
 
 	case FD_ATTR_TDC_USER_OFF:
-		printk("FD_ATTR_TDC_USER_OFF\n");
+		////printk("FD_ATTR_TDC_USER_OFF\n");
 		fd->tdc_user_offset = usr_val;
 		goto out;
 
 	case FD_ATTR_TDC_FLAGS:
-		printk("FD_ATTR_TDC_FLAGS\n");
+		////printk("FD_ATTR_TDC_FLAGS\n");
 		break; /* code below */
 	default:
 		goto out;
@@ -356,12 +365,12 @@ int fd_zio_conf_tdc(struct fd_dev *fd, enum fd_zattr_in_idx option,
 
 	/* This code is only about FD_ATTR_TDC_FLAGS */
 	change = fd->tdc_flags ^ usr_val; /* old xor new */
-	printk("%i ^ %i = %i\n", fd->tdc_flags, usr_val, change);
+	////printk("%i ^ %i = %i\n", fd->tdc_flags, usr_val, change);
 
 	/* No need to lock, as configuration is serialized by zio-core */
 	if (change & FD_TDCF_DISABLE_INPUT) {
 		reg = fd_readl(fd, FD_REG_GCR);
-		printk("%08x\n", change & FD_TDCF_DISABLE_INPUT);
+		////printk("%08x\n", change & FD_TDCF_DISABLE_INPUT);
 		if (usr_val & FD_TDCF_DISABLE_INPUT)
 			reg &= ~FD_GCR_INPUT_EN;
 		else
@@ -370,7 +379,7 @@ int fd_zio_conf_tdc(struct fd_dev *fd, enum fd_zattr_in_idx option,
 	}
 
 	if (change & FD_TDCF_DISABLE_TSTAMP) {
-		printk("%08x\n", change & FD_TDCF_DISABLE_TSTAMP);
+		////printk("%08x\n", change & FD_TDCF_DISABLE_TSTAMP);
 		reg = fd_readl(fd, FD_REG_TSBCR);
 		if (usr_val & FD_TDCF_DISABLE_TSTAMP)
 			reg &= ~FD_TSBCR_ENABLE;
@@ -380,13 +389,13 @@ int fd_zio_conf_tdc(struct fd_dev *fd, enum fd_zattr_in_idx option,
 	}
 
 	if (change & FD_TDCF_TERM_50) {
-		printk("%08x\n", change & FD_TDCF_TERM_50);
+		////printk("%08x\n", change & FD_TDCF_TERM_50);
 		if (usr_val & FD_TDCF_TERM_50){
-			mprintf("fd_gpio_set(fd, FD_GPIO_TERM_EN)\n");
+			////mprintf("fd_gpio_set(fd, FD_GPIO_TERM_EN)\n");
 			fd_gpio_set(fd, FD_GPIO_TERM_EN);
 		}
 		else{
-			mprintf("fd_gpio_clr(fd, FD_GPIO_TERM_EN)\n");
+			////mprintf("fd_gpio_clr(fd, FD_GPIO_TERM_EN)\n");
 			fd_gpio_clr(fd, FD_GPIO_TERM_EN);
 		}
 	}
@@ -401,7 +410,7 @@ out:
 /*static int fd_zio_conf_output(struct device *dev, struct zio_attribute *zattr,
 			      uint32_t  usr_val)
 {
-	printk("--*%s\n", __func__);
+	//printk("--*%s\n", __func__);
 	struct zio_cset *cset;
 	struct fd_dev *fd;
 	int ch;
@@ -422,61 +431,59 @@ out:
 }
 
 /* conf_set dispatcher and  and device-wide attributes */
-/*static int fd_zio_conf_set(struct device *dev, struct zio_attribute *zattr,
-			    uint32_t  usr_val)
+/*static int fd_zio_conf_set(struct device *dev, struct zio_attribute *zattr, uint32_t  usr_val)*/
+int fd_zio_conf_set(struct fd_dev *fd, enum fd_zattr_in_idx option, uint32_t *attr, uint32_t  usr_val)
 {
-	printk("--*%s\n", __func__);
+	////printk("--*%s\n", __func__);
 	struct fd_time t;
-	struct zio_device *zdev;
-	struct fd_dev *fd;
-	struct zio_attribute *attr;
+	//struct zio_device *zdev;
+	//struct fd_dev *fd;
+	//struct zio_attribute *attr;
 
-	if (__fd_get_type(dev) == FD_TYPE_INPUT)
+	/*if (__fd_get_type(dev) == FD_TYPE_INPUT)
 		return fd_zio_conf_tdc(dev, zattr, usr_val);
 	if (__fd_get_type(dev) == FD_TYPE_OUTPUT)
-		return fd_zio_conf_output(dev, zattr, usr_val);
+		return fd_zio_conf_output(dev, zattr, usr_val);*/
 
 	/* Remains: wholedev *
 	zdev = to_zio_dev(dev);
 	attr = zdev->zattr_set.ext_zattr;
-	fd = zdev->priv_d;
+	fd = zdev->priv_d;*/
 
-	if (zattr->id == FD_ATTR_DEV_UTC_H) {
-		/* no changing of the time when WR is on *
-		if (test_bit(FD_FLAG_WR_MODE, &fd->flags))
+	////mprintf("Recived %i\n", option);
+	if (option == FD_ATTR_DEV_UTC_H) {
+		////mprintf("FD_ATTR_DEV_UTC_H %i\n", FD_ATTR_DEV_UTC_H);
+		/* no changing of the time when WR is on */
+		if (test_bit(FD_FLAG_WR_MODE, fd->flags))
 			return -EAGAIN;
 
-		/* writing utc-h calls an atomic set-time *
-		t.utc = (uint64_t)attr[FD_ATTR_DEV_UTC_H].value << 32;
-		t.utc |= attr[FD_ATTR_DEV_UTC_L].value;
-		t.coarse = attr[FD_ATTR_DEV_COARSE].value;
+		/* writing utc-h calls an atomic set-time */
+		t.utc = (uint64_t)attr[FD_ATTR_DEV_UTC_H] << 32;
+		t.utc |= attr[FD_ATTR_DEV_UTC_L];
+		t.coarse = attr[FD_ATTR_DEV_COARSE];
 		fd_time_set(fd, &t, NULL);
 		return 0;
 	}
 
 	/* Not command, nothing to do *
 	if (zattr->id != FD_ATTR_DEV_COMMAND)
-		return 0;
+		return 0;*/
 
 	switch(usr_val) {
-	case FD_CMD_HOST_TIME:
-		/* can't change the time when WR is on *
-		if(test_bit(FD_FLAG_WR_MODE, &fd->flags))
-			return -EAGAIN;
-		return fd_time_set(fd, NULL, NULL);
 	case FD_CMD_WR_ENABLE:
+		////mprintf("FD_CMD_WR_ENABLE\n");
 		return fd_wr_mode(fd, 1);
 	case FD_CMD_WR_DISABLE:
 		return fd_wr_mode(fd, 0);
 	case FD_CMD_WR_QUERY:
 		return fd_wr_query(fd);
-	case FD_CMD_DUMP_MCP:
+	/*case FD_CMD_DUMP_MCP:
 		return fd_dump_mcp(fd);
 	case FD_CMD_PURGE_FIFO:
 		fd_writel(fd, FD_TSBCR_PURGE | FD_TSBCR_RST_SEQ
 			  | FD_TSBCR_CHAN_MASK_W(1) | FD_TSBCR_ENABLE,
 			  FD_REG_TSBCR);
-		return 0;
+		return 0;*/
 	default:
 		return -EINVAL;
 	}
@@ -491,7 +498,7 @@ enum attrs {__UTC_H, __UTC_L, __COARSE, __FRAC}; /* the order of our attrs */
 
 static void fd_attr_sub(uint32_t *a, uint32_t pico)
 {
-	printk("--*%s\n", __func__);
+	////printk("--*%s\n", __func__);
 	uint32_t coarse, frac;
 
 	fd_split_pico(pico, &coarse, &frac);
@@ -518,7 +525,7 @@ static void fd_attr_sub(uint32_t *a, uint32_t pico)
 
 static void fd_attr_add(uint32_t *a, uint32_t pico)
 {
-	printk("--*%s\n", __func__);
+	////printk("--*%s\n", __func__);
 	uint32_t coarse, frac;
 
 	fd_split_pico(pico, &coarse, &frac);
@@ -538,7 +545,7 @@ static void fd_attr_add(uint32_t *a, uint32_t pico)
 
 void fd_apply_offset(uint32_t *a, int32_t off_pico)
 {
-	printk("--*%s\n", __func__);
+	//printk("--*%s\n", __func__);
 	if (off_pico) {
 		if (off_pico > 0)
 			fd_attr_add(a, off_pico);
@@ -550,16 +557,16 @@ void fd_apply_offset(uint32_t *a, int32_t off_pico)
 /* Internal output engine */
 int __fd_zio_output(struct fd_dev *fd, int index1_4, uint32_t *attrs)
 {
-	printk("--*%s\n", __func__);
+	////printk("--*%s\n", __func__);
 	struct timespec delta, width, delay;
 	int ch = index1_4;
 	int mode = attrs[FD_ATTR_OUT_MODE];
 	int rep = attrs[FD_ATTR_OUT_REP];
 	int dcr = 0;
 	
-	mprintf("ch = %i\n", ch);
+	////mprintf("ch = %i\n", ch);
 
-	printk("mode == FD_OUT_MODE_DELAY = %0x, mode == FD_OUT_MODE_DISABLED = %x\n", FD_OUT_MODE_DELAY, FD_OUT_MODE_DISABLED);
+	////printk("mode == FD_OUT_MODE_DELAY = %0x, mode == FD_OUT_MODE_DISABLED = %x\n", FD_OUT_MODE_DELAY, FD_OUT_MODE_DISABLED);
 	if (mode == FD_OUT_MODE_DELAY || mode == FD_OUT_MODE_DISABLED) {
 		if(rep < 0 || rep > 16) /* delay mode allows trains of 1 to 16 pulses. */
 			return 0;
@@ -589,43 +596,43 @@ int __fd_zio_output(struct fd_dev *fd, int index1_4, uint32_t *attrs)
 	fd_apply_offset(attrs + FD_ATTR_OUT_END_H,
 			    fd->calib.zero_offset[ch]);
 
-	printk("FD_ATTR_OUT_END_H = %08x, fd->calib.zero_offset[%i] = %08x\n", FD_ATTR_OUT_END_H, ch, fd->calib.zero_offset[ch]);
+	////printk("FD_ATTR_OUT_END_H = %08x, fd->calib.zero_offset[%i] = %08x\n", FD_ATTR_OUT_END_H, ch, fd->calib.zero_offset[ch]);
 
 	fd_apply_offset(attrs + FD_ATTR_OUT_END_H,
 			  fd->ch_user_offset[ch]);
 
-	printk("FD_ATTR_OUT_END_H = %08x, fd->ch_user_offset[%i] = %08x\n", FD_ATTR_OUT_END_H, ch, fd->ch_user_offset[ch]);
+	////printk("FD_ATTR_OUT_END_H = %08x, fd->ch_user_offset[%i] = %08x\n", FD_ATTR_OUT_END_H, ch, fd->ch_user_offset[ch]);
 
 	fd_ch_writel(fd, ch, fd->ch[ch].frr_cur,  FD_REG_FRR);
 	
-	printk("ch = %08x, fd->ch[ch].frr_cur = %08x, FD_REG_FRR = %08x\n", ch, fd->ch[ch].frr_cur, FD_REG_FRR);
+	////printk("ch = %08x, fd->ch[ch].frr_cur = %08x, FD_REG_FRR = %08x\n", ch, fd->ch[ch].frr_cur, FD_REG_FRR);
 
 	fd_ch_writel(fd, ch, attrs[FD_ATTR_OUT_START_H],      FD_REG_U_STARTH);
-	printk("ch = %08x, attrs[%08x] = %08x\n", ch, FD_REG_U_STARTH, attrs[FD_ATTR_OUT_START_H]);
+	////printk("ch = %08x, attrs[%08x] = %08x\n", ch, FD_REG_U_STARTH, attrs[FD_ATTR_OUT_START_H]);
 	fd_ch_writel(fd, ch, attrs[FD_ATTR_OUT_START_L],      FD_REG_U_STARTL);
-	printk("ch = %08x, attrs[%08x] = %08x\n", ch, FD_ATTR_OUT_START_L, attrs[FD_ATTR_OUT_START_L]);
+	////printk("ch = %08x, attrs[%08x] = %08x\n", ch, FD_ATTR_OUT_START_L, attrs[FD_ATTR_OUT_START_L]);
 	fd_ch_writel(fd, ch, attrs[FD_ATTR_OUT_START_COARSE], FD_REG_C_START);
-	printk("ch = %08x, attrs[%08x] = %08x\n", ch, FD_ATTR_OUT_START_COARSE, attrs[FD_ATTR_OUT_START_COARSE]);
+	////printk("ch = %08x, attrs[%08x] = %08x\n", ch, FD_ATTR_OUT_START_COARSE, attrs[FD_ATTR_OUT_START_COARSE]);
 	fd_ch_writel(fd, ch, attrs[FD_ATTR_OUT_START_FINE],   FD_REG_F_START);
-	printk("ch = %08x, attrs[%08x] = %08x\n", ch, FD_ATTR_OUT_START_FINE, attrs[FD_ATTR_OUT_START_FINE]);
+	////printk("ch = %08x, attrs[%08x] = %08x\n", ch, FD_ATTR_OUT_START_FINE, attrs[FD_ATTR_OUT_START_FINE]);
 
 	fd_ch_writel(fd, ch, attrs[FD_ATTR_OUT_END_H],      FD_REG_U_ENDH);
-	printk("ch = %08x, attrs[%08x] = %08x\n", ch, FD_ATTR_OUT_END_H, attrs[FD_ATTR_OUT_END_H]);
+	////printk("ch = %08x, attrs[%08x] = %08x\n", ch, FD_ATTR_OUT_END_H, attrs[FD_ATTR_OUT_END_H]);
 	fd_ch_writel(fd, ch, attrs[FD_ATTR_OUT_END_L],      FD_REG_U_ENDL);
-	printk("ch = %08x, attrs[%08x] = %08x\n", ch, FD_ATTR_OUT_END_L, attrs[FD_ATTR_OUT_END_L]);
+	////printk("ch = %08x, attrs[%08x] = %08x\n", ch, FD_ATTR_OUT_END_L, attrs[FD_ATTR_OUT_END_L]);
 	fd_ch_writel(fd, ch, attrs[FD_ATTR_OUT_END_COARSE], FD_REG_C_END);
-	printk("ch = %08x, attrs[%08x] = %08x\n", ch, FD_ATTR_OUT_END_COARSE, attrs[FD_ATTR_OUT_END_COARSE]);
+	////printk("ch = %08x, attrs[%08x] = %08x\n", ch, FD_ATTR_OUT_END_COARSE, attrs[FD_ATTR_OUT_END_COARSE]);
 	fd_ch_writel(fd, ch, attrs[FD_ATTR_OUT_END_FINE],   FD_REG_F_END);
-	printk("ch = %08x, attrs[%08x] = %08x\n", ch, FD_ATTR_OUT_END_FINE, attrs[FD_ATTR_OUT_END_FINE]);
+	////printk("ch = %08x, attrs[%08x] = %08x\n", ch, FD_ATTR_OUT_END_FINE, attrs[FD_ATTR_OUT_END_FINE]);
 
 	fd_ch_writel(fd, ch, attrs[FD_ATTR_OUT_DELTA_L],      FD_REG_U_DELTA);
-	printk("ch = %08x, attrs[%08x] = %08x\n", ch, FD_ATTR_OUT_START_L, attrs[FD_ATTR_OUT_DELTA_L]);
+	////printk("ch = %08x, attrs[%08x] = %08x\n", ch, FD_ATTR_OUT_START_L, attrs[FD_ATTR_OUT_DELTA_L]);
 	fd_ch_writel(fd, ch, attrs[FD_ATTR_OUT_DELTA_COARSE], FD_REG_C_DELTA);
-	printk("ch = %08x, attrs[%08x] = %08x\n", ch, FD_ATTR_OUT_DELTA_COARSE, attrs[FD_ATTR_OUT_DELTA_COARSE]);
+	////printk("ch = %08x, attrs[%08x] = %08x\n", ch, FD_ATTR_OUT_DELTA_COARSE, attrs[FD_ATTR_OUT_DELTA_COARSE]);
 	fd_ch_writel(fd, ch, attrs[FD_ATTR_OUT_DELTA_FINE],   FD_REG_F_DELTA);
-	printk("ch = %08x, attrs[%08x] = %08x\n", ch, FD_ATTR_OUT_DELTA_FINE, attrs[FD_ATTR_OUT_START_L]);
+	////printk("ch = %08x, attrs[%08x] = %08x\n", ch, FD_ATTR_OUT_DELTA_FINE, attrs[FD_ATTR_OUT_START_L]);
 	
-	printk("mode == FD_OUT_MODE_DELAY = %0x, mode == FD_OUT_MODE_DISABLED = %x\n", FD_OUT_MODE_DELAY, FD_OUT_MODE_DISABLED);
+	////printk("mode == FD_OUT_MODE_DELAY = %0x, mode == FD_OUT_MODE_DISABLED = %x\n", FD_OUT_MODE_DELAY, FD_OUT_MODE_DISABLED);
 	if (mode == FD_OUT_MODE_DELAY || mode == FD_OUT_MODE_DISABLED) {
 		dcr = 0;
 		fd_ch_writel(fd, ch, FD_RCR_REP_CNT_W(rep - 1)
@@ -649,7 +656,7 @@ int __fd_zio_output(struct fd_dev *fd, int index1_4, uint32_t *attrs)
 	 * Most likely the calculation below fails with negatives, but
 	 * with negative spacing we get no pulses, and fine is irrelevant
 	 */
-	//printk("NSEC_PER_SEC = %i\n", (unsigned int) NSEC_PER_SEC);
+	////printk("NSEC_PER_SEC = %i\n", (unsigned int) NSEC_PER_SEC);
 	delta.tv_sec = attrs[FD_ATTR_OUT_DELTA_L];
 	delta.tv_nsec = attrs[FD_ATTR_OUT_DELTA_COARSE] * 8;
 	width.tv_sec = ((uint64_t)(attrs[FD_ATTR_OUT_END_H]) << 32
@@ -657,48 +664,53 @@ int __fd_zio_output(struct fd_dev *fd, int index1_4, uint32_t *attrs)
 		- ((uint64_t)(attrs[FD_ATTR_OUT_START_H]) << 32
 		   | attrs[FD_ATTR_OUT_START_L]);
 	if (attrs[FD_ATTR_OUT_END_COARSE] > attrs[FD_ATTR_OUT_START_COARSE]) {
-		printk("1st if\n");
+		////printk("1st if\n");
 		width.tv_nsec = 8 * attrs[FD_ATTR_OUT_END_COARSE]
 			- 8 * attrs[FD_ATTR_OUT_START_COARSE];
 	} else {
-		printk("1st else\n");
+		////printk("1st else\n");
 		width.tv_sec--;
-		width.tv_nsec = NSEC_PER_SEC - 8 * attrs[FD_ATTR_OUT_START_COARSE]+ 8 * attrs[FD_ATTR_OUT_END_COARSE];
-		printk("NSEC_PER_SEC-8*%08x-8*%08x=%08x\n", attrs[FD_ATTR_OUT_START_COARSE], attrs[FD_ATTR_OUT_END_COARSE], width.tv_nsec);
+		width.tv_nsec = NSEC_PER_SEC 
+			- 8 * attrs[FD_ATTR_OUT_START_COARSE]
+			+ 8 * attrs[FD_ATTR_OUT_END_COARSE];		
+		////printk("NSEC_PER_SEC-8*%08x+8*%08x=%08x\n", attrs[FD_ATTR_OUT_START_COARSE], attrs[FD_ATTR_OUT_END_COARSE], width.tv_nsec);
 	}
-	printk("*-*-*- delta=%llu:%llu\n", delta.tv_sec, delta.tv_nsec);
-	printk("*-*-*- width=%llu:%llu\n", width.tv_sec, width.tv_nsec);
+	////printk("*-*-*--> width=%llu:%llu\n", width.tv_sec, width.tv_nsec);
+	////printk("*-*-*--> delta=%llu:%llu\n", delta.tv_sec, delta.tv_nsec);
 	/* delta = delta - width (i.e.: delta is the low-signal width */
 	delta.tv_sec -= width.tv_sec;
 	if (delta.tv_nsec > width.tv_nsec) {
 		delta.tv_nsec -= width.tv_nsec;
-		printk("*-*-*- 2nd if -> delta=%llu:%llu\n", delta.tv_sec, delta.tv_nsec);
+		////printk("*-*-*- 2nd if -> delta=%llu:%llu\n", delta.tv_sec, delta.tv_nsec);
 	} else {
+		////printk("2nd else\n");
 		delta.tv_sec--;
 		delta.tv_nsec = NSEC_PER_SEC - width.tv_nsec + delta.tv_nsec;
-		printk("*-*-*-2nd else -> delta=%llu:%llu\n", delta.tv_sec, delta.tv_nsec);
+		////printk("*-*-*-2nd else -> delta=%llu:%llu\n", delta.tv_sec, delta.tv_nsec);
 	}
 	/* finally check */
-	if (width.tv_sec == 0 && width.tv_nsec > 200)
+	if (width.tv_sec == 0 && width.tv_nsec < 200)
 		dcr |= FD_DCR_NO_FINE;
-	if (delta.tv_sec == 0 && delta.tv_nsec > 200)
+	if (delta.tv_sec == 0 && delta.tv_nsec < 200)
 		dcr |= FD_DCR_NO_FINE;
-
+		
+	////printk("*-*-*--> width=%llu:%llu\n", width.tv_sec, width.tv_nsec);
+	////printk("*-*-*--> delta=%llu:%llu\n", delta.tv_sec, delta.tv_nsec);
 	fd_ch_writel(fd, ch, dcr, FD_REG_DCR);
-	printk("ch = %08x, dcr = %08x, FD_REG_DCR = %08x\n", ch, dcr, FD_REG_DCR);
+	////printk("ch = %08x, dcr = %08x, FD_REG_DCR = %08x\n", ch, dcr, FD_REG_DCR);
 	fd_ch_writel(fd, ch, dcr | FD_DCR_UPDATE, FD_REG_DCR);
-	printk("ch = %08x, dcr | FD_DCR_UPDATE = %08x, FD_REG_DCR = %08x\n", ch, dcr | FD_DCR_UPDATE, FD_REG_DCR);
+	////printk("ch = %08x, dcr | FD_DCR_UPDATE = %08x, FD_REG_DCR = %08x\n", ch, dcr | FD_DCR_UPDATE, FD_REG_DCR);
 	
-	printk("mode = %08x\n");
+	////printk("mode = %08x\n");
 	 
 	if (mode == FD_OUT_MODE_DELAY) {
 	    fd_ch_writel(fd, ch, dcr | FD_DCR_ENABLE, FD_REG_DCR);
-	    printk("FD_OUT_MODE_DELAY\n");
-	    printk("ch = %08x, dcr = %08x, dcr | FD_DCR_ENABLE = %08x, FD_REG_DCR = %08x\n", ch, dcr, dcr | FD_DCR_ENABLE, FD_REG_DCR);
+	   // //printk("FD_OUT_MODE_DELAY\n");
+	   // //printk("ch = %08x, dcr = %08x, dcr | FD_DCR_ENABLE = %08x, FD_REG_DCR = %08x\n", ch, dcr, dcr | FD_DCR_ENABLE, FD_REG_DCR);
 	} else if (mode == FD_OUT_MODE_PULSE) {
 		fd_ch_writel(fd, ch, dcr | FD_DCR_ENABLE | FD_DCR_PG_ARM,  FD_REG_DCR);
-		printk("FD_OUT_MODE_PULSE\n");
-		printk("ch = %08x, dcr = %08x, dcr | FD_DCR_ENABLE | FD_DCR_PG_ARM = %08x, FD_REG_DCR = %08x\n", ch, dcr, dcr | FD_DCR_ENABLE | FD_DCR_PG_ARM, FD_REG_DCR);
+		////printk("FD_OUT_MODE_PULSE\n");
+		////printk("ch = %08x, dcr = %08x, dcr | FD_DCR_ENABLE | FD_DCR_PG_ARM = %08x, FD_REG_DCR = %08x\n", ch, dcr, dcr | FD_DCR_ENABLE | FD_DCR_PG_ARM, FD_REG_DCR);
 	}
 	return 0;
 }
@@ -706,7 +718,7 @@ int __fd_zio_output(struct fd_dev *fd, int index1_4, uint32_t *attrs)
 /* This is called on user write */
 int fd_zio_output(struct fd_dev *fd, int channel, uint32_t *a)
 {
-	printk("--*%s\n", __func__);
+	//printk("--*%s\n", __func__);
 	int i;
 	//struct fd_dev *fd;
 	//struct zio_control *ctrl;
@@ -718,7 +730,7 @@ int fd_zio_output(struct fd_dev *fd, int channel, uint32_t *a)
 		dev_info(&fd->fmc->dev,
 			 "%s: attrs for chanell %i: ", __func__, channel);
 		/*for (i = FD_ATTR_DEV__LAST; i < FD_ATTR_OUT__LAST; i++)
-			printk("%08x%c", a[i],
+			//printk("%08x%c", a[i],
 			       i == FD_ATTR_OUT__LAST -1 ? '\n' : ' ');*/
 	}
 	return __fd_zio_output(fd, channel, a);
@@ -731,7 +743,7 @@ int fd_zio_output(struct fd_dev *fd, int channel, uint32_t *a)
  */
 /*static int fd_zio_input(struct zio_cset *cset)
 {
-	printk("--*%s\n", __func__);
+	//printk("--*%s\n", __func__);
 	struct fd_dev *fd;
 	fd = cset->zdev->priv_d;
 
@@ -758,7 +770,7 @@ int fd_zio_output(struct fd_dev *fd, int channel, uint32_t *a)
  */
 /*static int fd_zio_probe(struct zio_device *zdev)
 {
-	printk("--*%s\n", __func__);
+	//printk("--*%s\n", __func__);
 	struct fd_dev *fd;
 
 	/* link the new device from the fd structure *
@@ -869,7 +881,7 @@ static struct zio_driver fd_zdrv = {
 /* Register and unregister are used to set up the template driver */
 /*int fd_zio_register(void)
 {
-	printk("--*%s\n", __func__);
+	//printk("--*%s\n", __func__);
 	int err;
 
 	if (fd_use_raw_tdc) {
@@ -895,7 +907,7 @@ void fd_zio_unregister(void)
 /* preinitializes the outputs to some meaningful register values */
 /*static void __fd_init_outputs(struct fd_dev *fd)
 {
-	printk("--*%s\n", __func__);
+	//printk("--*%s\n", __func__);
 	uint32_t attrs [ FD_ATTR_OUT__LAST]; 
 	int i;
 	
@@ -920,7 +932,7 @@ void fd_zio_unregister(void)
 /* Init and exit are called for each FD card we have */
 /*int fd_zio_init(struct fd_dev *fd)
 {
-	printk("--*%s\n", __func__);
+	//printk("--*%s\n", __func__);
 	int err = 0;
 	int dev_id;
 
@@ -947,7 +959,7 @@ void fd_zio_unregister(void)
 
 void fd_zio_exit(struct fd_dev *fd)
 {
-	printk("--*%s\n", __func__);
+	//printk("--*%s\n", __func__);
 	zio_unregister_device(fd->hwzdev);
 	zio_free_device(fd->hwzdev);
 }*/

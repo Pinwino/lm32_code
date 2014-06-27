@@ -36,7 +36,7 @@ int main_term (const char **argv)
 
 	/* Standard part of the file (repeated code) */
 	if (tools_need_help(argc, argv))
-		help(argv[0]);
+		help(FD_CMD_TERM_HELP);
 
 	/*nboards = fdelay_init();
 
@@ -53,7 +53,7 @@ int main_term (const char **argv)
 		index = 0; /* so it works with no arguments */
 
 	printk("PRE ----->  optind = %i, argc = %i\n", optind, argc);
-	//tools_getopt_d_i(argc, argv, &dev, &index);
+	tools_getopt_d_i(argc, argv, FD_CMD_TERM_HELP);
 	printk("%s\n", argv[optind]);
 
 	/*if (index < 0 && dev < 0) {
@@ -73,7 +73,7 @@ int main_term (const char **argv)
 		else if (!strcmp(s, "1") || !strcmp(s, "on"))
 			newval = 1;
 		else
-			help(argv[0]);
+			help(FD_CMD_TERM_HELP);
 	}
 	/* Finally work */
 	/*b = fdelay_open(index, dev);

@@ -1,8 +1,10 @@
-obj-$(CONFIG_WR_NODE) += \
+obj-y += \
 	shell/shell.o \
 	shell/cmd_sdb.o \
-	#shell/cmd_fmc_fdelay_pulse.o \
+	shell/cmd_fmc_fdelay_pulse.o \
+	shell/cmd_fmc_fdelay_term.o \
+	shell/cmd_fmc_fdelay_status.o \
+	shell/cmd_fmc_fdelay_time.o \
 	shell/cmd_help.o 
 
-obj-n +=			shell/cmd_ip.o
-obj-$(CONFIG_CMD_SLEEP) +=			shell/cmd_sleep.o
+obj-y +=			shell/cmd_sleep.o

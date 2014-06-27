@@ -1,0 +1,68 @@
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751460] --*fd_zio_output
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751465] fmc_fine_delay FmcDelay1ns4cha-0200: fd_zio_output: attrs for cset 1: 
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751467] 00000002 ffffffff 00000000 00000005 00000000 00000000 00000000 00000005 00000006 00000000 00000000 0000000c 00000800 00000000 00000000
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751477] --*__fd_zio_output
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751479] mode == FD_OUT_MODE_DELAY = 1, mode == FD_OUT_MODE_DISABLED = 0
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751481] --*fd_apply_offset
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751482] --*fd_attr_sub
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751484] FD_ATTR_OUT_START_H = 0000000a, fd->calib.zero_offset[0] = ffff6ad6
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751486] --*fd_apply_offset
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751487] FD_ATTR_OUT_START_H = 0000000a, fd->ch_user_offset[0] = 00000000
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751489] --*fd_apply_offset
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751490] --*fd_attr_sub
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751492] FD_ATTR_OUT_END_H = 0000000e, fd->calib.zero_offset[0] = ffff6ad6
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751494] --*fd_apply_offset
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751495] FD_ATTR_OUT_END_H = 0000000e, fd->ch_user_offset[0] = 00000000
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751498] ch = 00000000, fd->ch[ch].frr_cur = 0000034c, FD_REG_FRR = 00000004
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751499] ch = 00000000, attrs[00000008] = 00000000
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751501] ch = 00000000, attrs[0000000b] = 00000004
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751503] ch = 00000000, attrs[0000000c] = 0773593b
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751505] ch = 00000000, attrs[0000000d] = 000003a1
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751507] ch = 00000000, attrs[0000000e] = 00000000
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751508] ch = 00000000, attrs[0000000f] = 00000005
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751510] ch = 00000000, attrs[00000010] = 00000001
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751512] ch = 00000000, attrs[00000011] = 000003a1
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751514] ch = 00000000, attrs[0000000b] = 00000000
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751515] ch = 00000000, attrs[00000013] = 0000000c
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751517] ch = 00000000, attrs[00000014] = 00000004
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751519] mode == FD_OUT_MODE_DELAY = 1, mode == FD_OUT_MODE_DISABLED = 0
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751521] ch = 00000000, dcr = 00000082, FD_REG_DCR = 00000000
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751523] ch = 00000000, dcr | FD_DCR_UPDATE = 00000083, FD_REG_DCR = 00000000
+Jun 12 23:47:28 tomsydemo kernel: [ 2721.751525] ch = 00000000, dcr = 00000082, dcr | FD_DCR_ENABLE | FD_DCR_PG_ARM = 00000087, FD_REG_DCR = 00000000
+
+*****************************************************************************************************************************************************************************************
+
+[ 1162.173779] 00000002 ffffffff 00000000 00000029 00000000 00000000 00000000 00000029 00000006 00000000 00000000 0000000c 00000800 00000000 00000000
+[ 1162.173789] --*__fd_zio_output
+[ 1162.173791] mode == FD_OUT_MODE_DELAY = 1, mode == FD_OUT_MODE_DISABLED = 0
+[ 1162.173792] --*fd_apply_offset
+[ 1162.173794] --*fd_attr_sub
+[ 1162.173796] FD_ATTR_OUT_START_H = 0000000a, fd->calib.zero_offset[0] = ffff6ad6
+[ 1162.173797] --*fd_apply_offset
+[ 1162.173799] FD_ATTR_OUT_START_H = 0000000a, fd->ch_user_offset[0] = 00000000
+[ 1162.173801] --*fd_apply_offset
+[ 1162.173802] --*fd_attr_sub
+[ 1162.173804] FD_ATTR_OUT_END_H = 0000000e, fd->calib.zero_offset[0] = ffff6ad6
+[ 1162.173805] --*fd_apply_offset
+[ 1162.173807] FD_ATTR_OUT_END_H = 0000000e, fd->ch_user_offset[0] = 00000000
+[ 1162.173809] ch = 00000000, fd->ch[ch].frr_cur = 0000034c, FD_REG_FRR = 00000004
+[ 1162.173811] ch = 00000000, attrs[00000008] = 00000000
+[ 1162.173813] ch = 00000000, attrs[0000000b] = 00000028
+[ 1162.173815] ch = 00000000, attrs[0000000c] = 0773593b
+[ 1162.173817] ch = 00000000, attrs[0000000d] = 000003a1
+[ 1162.173819] ch = 00000000, attrs[0000000e] = 00000000
+[ 1162.173820] ch = 00000000, attrs[0000000f] = 00000029
+[ 1162.173822] ch = 00000000, attrs[00000010] = 00000001
+[ 1162.173824] ch = 00000000, attrs[00000011] = 000003a1
+[ 1162.173826] ch = 00000000, attrs[0000000b] = 00000000
+[ 1162.173827] ch = 00000000, attrs[00000013] = 0000000c
+[ 1162.173829] ch = 00000000, attrs[00000014] = 00000028
+[ 1162.173831] mode == FD_OUT_MODE_DELAY = 1, mode == FD_OUT_MODE_DISABLED = 0
+[ 1162.173833] NSEC_PER_SEC = 1000000000
+[ 1162.173834] 1st if
+[ 1162.173836] *-*-*- delta=0:96
+[ 1162.173837] *-*-*- width=0:48
+[ 1162.173839] *-*-*- 2nd if -> delta=0:48
+[ 1162.173841] ch = 00000000, dcr = 00000082, FD_REG_DCR = 00000000
+[ 1162.173843] ch = 00000000, dcr | FD_DCR_UPDATE = 00000083, FD_REG_DCR = 00000000
+[ 1162.173845] ch = 00000000, dcr = 00000082, dcr | FD_DCR_ENABLE | FD_DCR_PG_ARM = 00000087, FD_REG_DCR = 0000000

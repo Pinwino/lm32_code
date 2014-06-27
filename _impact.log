@@ -1,9 +1,10 @@
 iMPACT Version: 14.7
 
-iMPACT log file Started on Mon May 26 17:02:28 2014
+iMPACT log file Started on Sat Jun 21 23:31:00 2014
 
 Welcome to iMPACT
 iMPACT Version: 14.7
+Project: /home/pepe//auto_project.ipf created.
 // *** BATCH CMD : setMode -bs
 GUI --- Auto connect to cable...
 // *** BATCH CMD : setCable -port auto
@@ -15,18 +16,51 @@ Checking cable driver.
 File version of /opt/Xilinx/14.7/ISE_DS/ISE/bin/lin64/xusbdfwu.hex = 1030.
 File version of /usr/share/xusbdfwu.hex = 1030.
  Using libusb.
- Kernel release = 3.5.0-49-generic.
+ Kernel release = 3.5.0-51-generic.
  Max current requested during enumeration is 300 mA.
 Type = 0x0005.
-write (count, cmdBuffer, dataBuffer) failed 20000020.
+ Cable Type = 3, Revision = 0.
+ Setting cable speed to 6 MHz.
+ERROR:Cse - A reference voltage has not been detected on the ribbon cable   interface to the target system ( pin 2 ).  Check that power is applied to the   target system and that the ribbon cable is properly seated at both ends.  The   status LED on Platform Cable USB will be GREEN if target voltage is in the   proper range and applied to the correct pin.
+Cable connection failed.
+Connecting to cable (Parallel Port - parport0).
+ Linux release = 3.5.0-51-generic.
+WARNING:iMPACT -  Module windrvr6 is not loaded. Please reinstall the cable   drivers. See Answer Record 22648.
+Cable connection failed.
+Connecting to cable (Parallel Port - parport1).
+ Linux release = 3.5.0-51-generic.
+WARNING:iMPACT -  Module windrvr6 is not loaded. Please reinstall the cable   drivers. See Answer Record 22648.
+Cable connection failed.
+Connecting to cable (Parallel Port - parport2).
+ Linux release = 3.5.0-51-generic.
+WARNING:iMPACT -  Module windrvr6 is not loaded. Please reinstall the cable   drivers. See Answer Record 22648.
+Cable connection failed.
+Connecting to cable (Parallel Port - parport3).
+ Linux release = 3.5.0-51-generic.
+WARNING:iMPACT -  Module windrvr6 is not loaded. Please reinstall the cable   drivers. See Answer Record 22648.
+Cable connection failed.
+PROGRESS_END - End Operation.
+Elapsed time =    110 sec.
+Cable autodetection failed.
+WARNING:iMPACT:923 - Can not find cable, check cable setup !GUI --- Auto connect to cable...
+// *** BATCH CMD : setCable -port auto
+AutoDetecting cable. Please wait.
+*** WARNING ***: When port is set to auto detect mode, cable speed is set todefault 6 MHz regardless of explicit arguments supplied for setting the baudrates
+PROGRESS_START - Starting Operation.
+Connecting to cable (Usb Port - USB21).
+Checking cable driver.
+File version of /opt/Xilinx/14.7/ISE_DS/ISE/bin/lin64/xusbdfwu.hex = 1030.
+File version of /usr/share/xusbdfwu.hex = 1030.
+ Using libusb.
+ Kernel release = 3.5.0-51-generic.
+ Max current requested during enumeration is 300 mA.
+Type = 0x0005.
  Cable Type = 3, Revision = 0.
  Setting cable speed to 6 MHz.
 Cable connection established.
-Firmware version = 2300.
+Firmware version = 2401.
 File version of /opt/Xilinx/14.7/ISE_DS/ISE/data/xusb_xp2.hex = 2401.
 Firmware hex file version = 2401.
-Downloading /opt/Xilinx/14.7/ISE_DS/ISE/data/xusb_xp2.hex.
-Downloaded firmware version = 2401.
 PLD file version = 200Dh.
  PLD version = 200Dh.
 PROGRESS_END - End Operation.
@@ -34,50 +68,52 @@ Elapsed time =      0 sec.
 Type = 0x0005.
 ESN option: 000014D245A701.
 Attempting to identify devices in the boundary-scan chain configuration...
-INFO:iMPACT - Current time: 5/26/14 5:02 PM
+INFO:iMPACT - Current time: 6/21/14 11:33 PM
 // *** BATCH CMD : Identify -inferir 
 PROGRESS_START - Starting Operation.
-Identifying chain contents...'0': : Manufacturer's ID = Xilinx xc6slx100t, Version : 2
+Identifying chain contents...'0': : Manufacturer's ID = Xilinx xc6slx45t, Version : 3
 INFO:iMPACT:1777 - 
-   Reading /opt/Xilinx/14.7/ISE_DS/ISE/spartan6/data/xc6slx100t.bsd...
-INFO:iMPACT:501 - '1': Added Device xc6slx100t successfully.
+   Reading /opt/Xilinx/14.7/ISE_DS/ISE/spartan6/data/xc6slx45t.bsd...
+INFO:iMPACT:501 - '1': Added Device xc6slx45t successfully.
 ----------------------------------------------------------------------
 done.
 PROGRESS_END - End Operation.
 Elapsed time =      0 sec.
 // *** BATCH CMD : identifyMPM 
-// *** BATCH CMD : assignFile -p 1 -file"/home/pepe/keep_untouch/hdl/syn/spec/wr/spec_top.bit"
-'1': Loading file '/home/pepe/keep_untouch/hdl/syn/spec/wr/spec_top.bit' ...
-done.
-INFO:iMPACT:2257 - Startup Clock has been changed to 'JtagClk' in the bitstream   stored in memory,
-   but the original bitstream file remains unchanged.
-UserID read from the bitstream file = 0xFFFFFFFF.
-Data width read from the bitstream file = 1.
-INFO:iMPACT:501 - '1': Added Device xc6slx100t successfully.
-----------------------------------------------------------------------
-// *** BATCH CMD : assignFile -p 1 -file"/home/pepe/wr/fd_clean/hdl/syn/spec/spec_top.bit"
-'1': Loading file '/home/pepe/wr/fd_clean/hdl/syn/spec/spec_top.bit' ...
-done.
-INFO:iMPACT:2257 - Startup Clock has been changed to 'JtagClk' in the bitstream   stored in memory,
-   but the original bitstream file remains unchanged.
-UserID read from the bitstream file = 0xFFFFFFFF.
-Data width read from the bitstream file = 1.
-INFO:iMPACT:501 - '1': Added Device xc6slx100t successfully.
-----------------------------------------------------------------------
-INFO:iMPACT - Current time: 5/26/14 5:03 PM
-// *** BATCH CMD : Program -p 1 
+INFO:iMPACT - Current time: 6/21/14 11:33 PM
+// *** BATCH CMD : ReadIdcode -p 1 
 Maximum TCK operating frequency for this device chain: 25000000.
 Validating chain...
 Boundary-scan chain validated successfully.
-'1': Programming device...
-PROGRESS_START - Starting Operation.
- LCK_cycle = NoWait.
-LCK cycle: NoWait
-done.
+'1': IDCODE is '00110100000000101000000010010011'
+'1': IDCODE is '34028093' (in hex).
+'1': : Manufacturer's ID = Xilinx xc6slx45t, Version : 3
+INFO:iMPACT - Current time: 6/21/14 11:34 PM
+// *** BATCH CMD : ReadStatusRegister -p 1 
+Maximum TCK operating frequency for this device chain: 25000000.
+Validating chain...
+Boundary-scan chain validated successfully.
+'1': Reading bootsts register contents...
+[0] VALID_0 - ERROR OR END OF STARTUP (EOS) DETECTED                       :        1
+[1] FALLBACK_0 - FALLBACK RECONFIGURATION ATTEMPT DETECTED                 :        0
+[2] RESERVED                                                               :        0
+[3] WTO_ERROR_0 - WATCHDOG TIME OUT ERROR                                  :        0
+[4] ID_ERROR_0 - FPGA DEVICE IDCODE ERROR                                  :        0
+[5] CRC_ERROR_0 - CYCLIC REDUNDANCY CHECK (CRC) ERROR                      :        0
+[6] VALID_1 - ERROR OR END OF STARTUP (EOS) DETECTED                       :        0
+[7] FALLBACK_1 - FALLBACK RECONFIGURATION ATTEMPT DETECTED                 :        0
+[8] RESERVED                                                               :        0
+[9] WTO_ERROR_1 - WATCHDOG TIME OUT ERROR                                  :        0
+[10] ID_ERROR_1 - FPGA DEVICE IDCODE ERROR                                 :        0
+[11] CRC_ERROR_1 - CYCLIC REDUNDANCY CHECK (CRC) ERROR                     :        0
+[12] STRIKE CNT - STRIKE COUNT FOR FALLBACK ATTEMPTS                       :        0
+[13] STRIKE_CNT - STRIKE COUNT FOR FALLBACK ATTEMPTS                       :        0
+[14] STRIKE_CNT - STRIKE COUNT FOR FALLBACK ATTEMPTS                       :        0
+[15] STRIKE_CNT - STRIKE COUNT FOR FALLBACK ATTEMPTS                       :        0
 '1': Reading status register contents...
 [0] CRC ERROR                                                              :        0
 [1] IDCODE ERROR                                                           :        0
-[2] DCM LOCK STATUS                                                        :        1
+[2] DCM LOCK STATUS                                                        :        0
 [3] GTS_CFG_B STATUS                                                       :        1
 [4] GWE STATUS                                                             :        1
 [5] GHIGH STATUS                                                           :        1
@@ -91,20 +127,89 @@ done.
 [13] DONE PIN                                                              :        1
 [14] SUSPEND STATUS                                                        :        0
 [15] FALLBACK STATUS                                                       :        0
-INFO:iMPACT:2219 - Status register values:
-INFO:iMPACT - 0011 1100 1110 1100 
-INFO:iMPACT:579 - '1': Completed downloading bit file to device.
-INFO:iMPACT:188 - '1': Programming completed successfully.
- LCK_cycle = NoWait.
-LCK cycle: NoWait
-INFO:iMPACT - '1': Checking done pin....done.
-'1': Programmed successfully.
+Attempting to identify devices in the boundary-scan chain configuration...
+INFO:iMPACT - Current time: 6/21/14 11:34 PM
+// *** BATCH CMD : Identify -inferir 
+PROGRESS_START - Starting Operation.
+Identifying chain contents...'0': : Manufacturer's ID = Xilinx xc6slx45t, Version : 3
+INFO:iMPACT:1777 - 
+   Reading /opt/Xilinx/14.7/ISE_DS/ISE/spartan6/data/xc6slx45t.bsd...
+INFO:iMPACT:501 - '1': Added Device xc6slx45t successfully.
+----------------------------------------------------------------------
+done.
 PROGRESS_END - End Operation.
-Elapsed time =     10 sec.
-INFO:iMPACT - Current time: 5/26/14 5:40 PM
-// *** BATCH CMD : Program -p 1 
+Elapsed time =      0 sec.
+// *** BATCH CMD : identifyMPM 
+Attempting to identify devices in the boundary-scan chain configuration...
+INFO:iMPACT - Current time: 6/21/14 11:35 PM
+// *** BATCH CMD : Identify -inferir 
+PROGRESS_START - Starting Operation.
+Identifying chain contents...'0': : Manufacturer's ID = Xilinx xc6slx45t, Version : 3
+INFO:iMPACT:1777 - 
+   Reading /opt/Xilinx/14.7/ISE_DS/ISE/spartan6/data/xc6slx45t.bsd...
+INFO:iMPACT:501 - '1': Added Device xc6slx45t successfully.
+----------------------------------------------------------------------
+done.
+PROGRESS_END - End Operation.
+Elapsed time =      0 sec.
+// *** BATCH CMD : identifyMPM 
+Selected part: AT45DB321B
+// *** BATCH CMD : attachflash -position 1 -spi "AT45DB321B"
+// *** BATCH CMD : assignfiletoattachedflash -position 1 -file"/home/pepe/keep_untouch/hdl/syn/spec/wr/Untitled.mcs"
+INFO:iMPACT - Current time: 6/21/14 11:36 PM
+// *** BATCH CMD : Erase -p 1 -spionly 
 Maximum TCK operating frequency for this device chain: 25000000.
 Validating chain...
 Boundary-scan chain validated successfully.
-'1': Programming device...
+'1': SPI access core not detected. SPI access core will be downloaded to thedevice to enable operations.
+INFO:iMPACT - Downloading core file   /opt/Xilinx/14.7/ISE_DS/ISE/spartan6/data/xc6slx45t_spi.cor.
 PROGRESS_START - Starting Operation.
+'1': Downloading core...
+ LCK_cycle = NoWait.
+LCK cycle: NoWait
+done.
+'1': Reading status register contents...
+INFO:iMPACT:2219 - Status register values:
+INFO:iMPACT - 0011 1100 1110 1100 
+INFO:iMPACT:2492 - '1': Completed downloading core to device.
+INFO:iMPACT - SPI Device not found.
+INFO:iMPACT:2488 - The operation did not complete successfully.
+PROGRESS_END - End Operation.
+Elapsed time =      2 sec.
+INFO:iMPACT - Current time: 6/21/14 11:37 PM
+// *** BATCH CMD : Program -p 1 -dataWidth 1 -spionly -e -v -loadfpga 
+Maximum TCK operating frequency for this device chain: 25000000.
+Validating chain...
+Boundary-scan chain validated successfully.
+INFO:iMPACT - SPI Device not found.
+INFO:iMPACT:2488 - The operation did not complete successfully.
+INFO:iMPACT - '1': Flash was not programmed successfully.
+PROGRESS_START - Starting Operation.
+PROGRESS_END - End Operation.
+Elapsed time =      0 sec.
+Project: '/home/pepe//auto_project.ipf' created.
+// *** BATCH CMD : setMode -bs
+// *** BATCH CMD : setMode -ss
+// *** BATCH CMD : setMode -sm
+// *** BATCH CMD : setMode -hw140
+// *** BATCH CMD : setMode -spi
+// *** BATCH CMD : setMode -acecf
+// *** BATCH CMD : setMode -acempm
+// *** BATCH CMD : setMode -pff
+// *** BATCH CMD : setMode -bs
+// *** BATCH CMD : saveProjectFile -file "/home/pepe//auto_project.ipf"
+INFO:iMPACT - User_EnvOsname: 'Ubuntu'
+INFO:iMPACT - User_EnvOsrelease: 'Ubuntu 12.04.4 LTS'
+// *** BATCH CMD : setMode -bs
+INFO:iMPACT - Launching WebTalk, please refer to the webtalk log at   /home/pepe/webtalk.log for details.
+INFO:iMPACT - Running wbtc successfully.
+// *** BATCH CMD : setMode -bs
+// *** BATCH CMD : deleteDevice -position 1
+// *** BATCH CMD : setMode -bs
+// *** BATCH CMD : setMode -ss
+// *** BATCH CMD : setMode -sm
+// *** BATCH CMD : setMode -hw140
+// *** BATCH CMD : setMode -spi
+// *** BATCH CMD : setMode -acecf
+// *** BATCH CMD : setMode -acempm
+// *** BATCH CMD : setMode -pff

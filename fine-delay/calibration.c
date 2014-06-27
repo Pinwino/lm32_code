@@ -20,7 +20,7 @@
 /* At factory config time, it's possible to load a file and/or write eeprom */
 static char *calibration_load;
 static int calibration_save;
-static int calibration_check=1;
+static int calibration_check;
 static int calibration_default;
 
 module_param(calibration_load, charp, 0444);

@@ -18,12 +18,14 @@ obj-y = arch/lm32/crt0.o arch/lm32/irq.o sbrkr.o
 obj-y += fine-delay/spi.o fine-delay/gpio.o fine-delay/pll.o fine-delay/onewire.o fine-delay/time.o fine-delay/i2c.o fine-delay/timer.o irq_timer.o
 obj-n += fine-delay/calibrate_old.o fine-delay/acam_old.o fine-delay/calibration_old.o
 obj-y += fine-delay/calibrate.o fine-delay/acam.o fine-delay/calibration.o
-obj-n += fine-delay/tools-util.o
+obj-y += fine-delay/tools-util.o
 obj-y += linux/time.o linux/math64.o 
-obj-n += opt_org.o fine-delay/fdelay-output.o
+obj-y += opt_org.o fine-delay/fdelay-output.o
+obj-y += fine-delay/fd-zio.o
+obj-n += fine-delay/fdelay-tdc.o
 LDS-y = arch/lm32/ram.ld
 
-obj-y += tst_eeprom.o #tst_tics.o
+obj-y += fd_stand_alone.o #tst_eeprom.o #tst_tics.o
 
 # our linker script is preprocessed, so have a rule here
 %.ld: %.ld.S $(AUTOCONF) .config
@@ -58,7 +60,7 @@ LDFLAGS = $(LDFLAGS_PLATFORM) \
 
 OBJS = $(obj-y)
 
-OUTPUT   = uart
+OUTPUT = fd_std
 
 #REVISION=$(shell git describe --dirty --always)
 

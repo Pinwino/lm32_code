@@ -25,45 +25,13 @@
 extern struct fd_dev fd; 
 extern int fd_time_get(struct fd_dev *fd, struct fd_time *t, struct timespec *ts);
 
-//static int vsscanf __P((const char *, const char *, va_list));
-
-/*int sscanf (const char *buf, const char *fmt, ...)
-{
-    int count;
-    va_list ap;
-    
-    va_start (ap, fmt);
-    count = vsscanf (buf, fmt, ap);
-    va_end (ap);
-    return (count);
-}*/
-
-void help(char * name)
-{
-	//fprintf(stderr, "%s: Use \"%s [-i <index>] [-d <dev>] [<opts>]\n",
-		//name, name);
-		printf("\n");
-	mprintf("------> Options:\n");
-	printf("\n");
-		/*"   -o <output>     ouput channel: 1..4 (default 1)\n"
-		"   -c <count>      default is 0 and means forever\n"
-		"   -m <mode>       \"pulse\" (default), \"delay\", \"disable\"\n"
-		"   -r <reltime>    relative time,  e.g. \"10m+20u\" -- use m,u,n,p and add/sub\n"
-		"   -D <date>       absolute time, <secs>:<nano>\n"
-		"   -T <period>     period, e.g. \"50m-20n\" -- use m,u,n,p and add/sub\n"
-		"   -w <width>      like period; defaults to 50%% period\n"
-		"   -t              wait for trigger before //exiting\n"
-		"   -p              pulse per seconds (sets -D -T -w)\n"
-		"   -1              10MHz (sets -D -T -w)\n"
-		"   -v              verbose (report action)\n");*/
-	////exit(1);
-}
 
 struct fdelay_time t_width; /* save width here, add to start before acting */
 
 /* This comes from oldtools/fdelay-pulse-tom.c, unchanged */
 static void parse_time(char *s, struct fdelay_time *t)
 {
+	printf("%s\n", __func__);
 	int64_t time_ps = 0;
 	int64_t extra_seconds = 0;
 	int64_t sign = 1;
@@ -73,7 +41,7 @@ static void parse_time(char *s, struct fdelay_time *t)
 	const int64_t one_second = 1000000000000LL;
 
 	char c, *buf = s;
-
+	mprintf("%s\n", buf);
 	while ((c = *buf++) != 0) {
 		switch (c) {
 		case '+':
@@ -142,6 +110,10 @@ static void parse_time(char *s, struct fdelay_time *t)
 		printf("dbg: raw %lld, %lld, converted: %lld s %d ns %d ps\n",
 		       extra_seconds,time_ps, t->utc, t->coarse * 8,
 		       t->frac * 8000 / 4096);
+	printf("dbg: raw %lld", extra_seconds << 32);
+	printf(", %lld,", time_ps << 32);
+	printf(" converted: %lld s ", t->utc  <<  32);
+	printf("%d ns %d ps\n", t->coarse * 8, t->frac * 8000 / 4096);
 }
 
 
@@ -171,6 +143,7 @@ static struct fdelay_time ts_add(struct fdelay_time a, struct fdelay_time b)
 
 void parse_default(struct fdelay_pulse *p)
 {
+	printf("%s\n", __func__);
 	memset(p, 0, sizeof(*p));
 	memset(&t_width, 0, sizeof(&t_width));
 	p->mode =  FD_OUT_MODE_PULSE;
@@ -183,6 +156,7 @@ void parse_default(struct fdelay_pulse *p)
 
 void parse_pps(struct fdelay_pulse *p)
 {
+	printf("%s\n", __func__);
 	parse_default(p);
 
 	t_width.coarse = COARSE_PER_SEC / 100; /* 10ms width **/
@@ -192,6 +166,7 @@ void parse_pps(struct fdelay_pulse *p)
 
 void parse_10mhz(struct fdelay_pulse *p)
 {
+	printf("%s\n", __func__);
 	parse_default(p);
 
 	t_width.coarse = 6 /* 48ns */;
@@ -199,48 +174,25 @@ void parse_10mhz(struct fdelay_pulse *p)
 	p->loop.frac = 2048 /* 4ns */;
 	tools_report_time(" t_width ", &t_width, TOOLS_UMODE_USER);
 	tools_report_time(" p ", &p, TOOLS_UMODE_USER);
-	printf("** 10 Mhz ** \n");
 }
 
 void parse_reltime(struct fdelay_pulse *p, char *s)
 {
+	printf("%s\n", __func__);
 	memset(&p->start, 0, sizeof(p->start));
 	parse_time(s, &p->start);
 }
 
 void parse_abstime(struct fdelay_pulse *p, char *s)
 {
+	printf("%s\n", __func__);
 	unsigned long long utc;
 	unsigned long nanos;
-	char *c, *ptr, tok=":", *rest;
-	uint8_t error=0;
-	
-	c=s;
-	
-	if ((ptr = strpbrk (c, tok)) > 0){
-		ptr[0] = 0;
-		utc=strtol(c, &rest, 0);
-		c = ptr+1;
-		if (rest && *rest)
-			error=-1;
-		else{
-			while (ptr++){
-				if (isalpha(ptr[0])){
-					ptr[0]=0;
-					break;
-				}
-			}
-			nanos=strtol(c, &rest, 0);
-			if (rest && *rest)
-				error=-1;
-		} //if ((offset = strpbrk (c, tok) - c) > 0)	
-	}
 
-	if (error < 0) {
+	if (sscanf_addhoc_replacement(s, &utc, &nanos) < 2) {
 		fprintf(stderr, "Wrong <sec>:<nano> string \"%s\"\n", s);
-		//return error;
+		return -1;
 	}
-	ptr = strtok (c, tok);
 	
 	p->start.utc = utc;
 	p->start.coarse = nanos / 8;
@@ -249,12 +201,14 @@ void parse_abstime(struct fdelay_pulse *p, char *s)
 
 void parse_period(struct fdelay_pulse *p, char *s)
 {
+	printf("%s\n", __func__);
 	memset(&p->loop, 0, sizeof(p->loop));
 	parse_time(s, &p->loop);
 }
 
 void parse_width(struct fdelay_pulse *p, char *s)
 {
+	printf("%s\n", __func__);
 	memset(&t_width, 0, sizeof(&t_width));
 	parse_time(s, &t_width);
 }
@@ -262,6 +216,7 @@ void parse_width(struct fdelay_pulse *p, char *s)
 
 static int main_pulse(const char **argv)
 {
+	printf("%s\n", __func__);
 	struct fdelay_board *b;
 	int nboards = 1;
 	int argc =0;
@@ -274,8 +229,8 @@ static int main_pulse(const char **argv)
 	
 	optind = 0;
 	
-	while(argv[argc++] != NULL){}
-	argc--;
+	//while(argv[argc++] != NULL){}
+	argc=str_vector_length (argv);
 	//unsigned int optarg=0, optind=0;*/
 	for (i=0;i<argc;i++)
 		mprintf("fmc_fdelay_pulse with %i arguments: %s\n", argc, argv[i]);
@@ -283,55 +238,20 @@ static int main_pulse(const char **argv)
 
 	/* Standard part of the file (repeated code) */
 	if (tools_need_help(argc, argv)){
-		help(argv[0]);
+		help(FD_CMD_PULS_HELP);
 		return 0;
 	}
-		 
-	
-	/*nboards = fdelay_init();*/
-
-
-	/*if (nboards < 0) {
-		fprintf(stderr, "%s: fdelay_init(): %s\n", argv[0],
-			strerror(errno));
-		//exit(1);
-	}
-	if (nboards == 0) {
-		fprintf(stderr, "%s: no boards found\n", argv[0]);
-		//exit(1);
-	}
-	if (nboards == 1)*/
-		index = 0; /* so it works with no arguments */
-	
-	mprintf("...That's all folks!!!!\n");
-	
+		
 	parse_default(&p);
 	
-	mprintf ("Before : opt=%d, optarg=%s, optind=%d\n", opt, optarg, optind);
+	//mprintf ("Before : opt=%d, optarg=%s, optind=%d\n", opt, optarg, optind);
 	/* Parse our specific arguments */
 	while ((opt = getopt(argc, argv, "ho:c:m:r:D:T:w:tp1v")) != -1) {
-		mprintf ("opt=%c, optarg=%s, optind=%d\n", opt, optarg, optind);
 		switch (opt) {
 			char *rest;
-
-		/*case 'i':
-			index = strtol(optarg, &rest, 0);
-			if (rest && *rest) {
-				fprintf(stderr, "%s: Not a number \"%s\"\n",
-					argv[0], optarg);
-				////exit(1);
-			}
-			break;
-		case 'd':
-			dev = strtol(optarg, &rest, 0);
-			if (rest && *rest) {
-				fprintf(stderr, "%s: Not a number \"%s\"\n",
-					argv[0], optarg);
-				//exit(1);
-			}
-			break;*/
+			
 		case 'h':
-			help(argv[0]);
+			help(FD_CMD_PULS_HELP);
 			return 0;
 
 		case 'o':
@@ -357,12 +277,18 @@ static int main_pulse(const char **argv)
 			p.rep = count ? count : -1 /* infinite */;
 			break;
 		case 'm':
-			if (!strcmp(optarg, "disable"))
+			if (!strcmp(optarg, "disable")){
+				mprintf("FD_OUT_MODE_DISABLED\n");
 				p.mode = FD_OUT_MODE_DISABLED;
-			else if (!strcmp(optarg, "pulse"))
+			}
+			else if (!strcmp(optarg, "pulse")){
 				p.mode = FD_OUT_MODE_PULSE;
-			else if (!strcmp(optarg, "delay"))
+				mprintf("FD_OUT_MODE_PULSE\n");
+			}
+			else if (!strcmp(optarg, "delay")){
 				p.mode = FD_OUT_MODE_DELAY;
+				mprintf("FD_OUT_MODE_DELAY\n");
+			}
 			else {
 				fprintf(stderr, "%s: invalid mode \"%s\"\n",
 					argv[0], optarg);
@@ -399,31 +325,15 @@ static int main_pulse(const char **argv)
 			verbose = 1;
 			break;
 		default:
-			help(argv[0]); 
+			help(FD_CMD_PULS_HELP); 
 			return 0;
 		}
 	}
 	if (optind != argc){
-		help(argv[0]); /* too many arguments */
+		help(FD_CMD_PULS_HELP); /* too many arguments */
 		return 0;
 	}
 	else if ((opt != '?') && (opt != ':')) {
-		
-		mprintf ("After opt=%d, optarg=%s, optind=%d\n", opt, optarg, optind);
-
-		/*if (index < 0 && dev < 0) {
-			fprintf(stderr, "%s: several boards, please pass -i or -d\n",
-				argv[0]);
-			//exit(1);
-		}*/
-
-		//b = fdelay_open(index, dev);
-		/*if (!b) {
-			fprintf(stderr, "%s: fdelay_open(): %s\n", argv[0],
-			strerror(errno));
-		//exit(1);
-		}*/
-		
 		
 		if(channel < 0)
 		{
@@ -433,10 +343,8 @@ static int main_pulse(const char **argv)
 
 		/* Final fixes: if  reltime in pulse mode, add current time */
 		if (p.mode == FD_OUT_MODE_PULSE && p.start.utc == 0) {
-			printf("------------------> is pulse!!!\n");
 			struct fd_time current_board_time;
 
-		//fdelay_get_time(b, &current_board_time);
 		fd_time_get(&fd, &current_board_time, NULL);
 		/* Start next second, or next again if too near to overlap */
 		p.start.utc = current_board_time.utc + 1;
@@ -447,9 +355,10 @@ static int main_pulse(const char **argv)
 		//uint32_t aux = p.start.utc >> 32;
 		//p.start.utc = p.start.utc << 32 | p.start.utc >> 32;
 		//printf("------------------> low p.start.utc =  %llu, high p.start.utc =  %llu,  p.start.coarse = %llu\n", p.start.utc, aux, p.start.coarse);		
+		//printf("------------------> p.start.utc =  %llu\n", p.start.utc << 32);		
+		//printf("------------------> p.start.coarse = %llu\n", p.start.coarse);		
 		/* Report to user how parsing turned out to be */
-		if(1){
-			printf("*************-*********-******\n");
+		if(verbose){
 			printf("Parsed times:\n");
 			tools_report_time("  start time: ", &p.start, TOOLS_UMODE_USER);
 			tools_report_time("  pulse width:", &t_width, TOOLS_UMODE_USER);
@@ -469,24 +378,6 @@ static int main_pulse(const char **argv)
 		report_output_config(channel, &p, TOOLS_UMODE_USER);
 		fdelay_config_pulse(channel, &p);
 
-		/*if (fdelay_config_pulse(b, channel, &p) < 0) {
-			fprintf(stderr, "%s: fdelay_config_pulse(): %s\n",
-				argv[0], strerror(errno));
-			//exit(1);
-		}
-		while (trigger_wait) {
-			usleep(10 * 1000);
-			i = fdelay_has_triggered(b, channel);
-			if (i < 0) {
-				fprintf(stderr, "%s: waiting for trigger: %s\n",
-					argv[0], strerror(errno));
-				//exit(1);
-			}
-			trigger_wait = !i;
-		}
-
-		/*fdelay_close(b);
-		fdelay_exit();*/
 	}
 	mprintf("**** Pulse done!!!!!!!!!!!\n");
 	optind=0;

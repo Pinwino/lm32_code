@@ -15,9 +15,9 @@ config WR_NODE
 
 config PRINT_BUFSIZE
 	int
-	default 128
+	default 256
 
-config PRINTF_XINT
+config PRINTF_FULL
 	boolean
 	default y
 
@@ -39,7 +39,7 @@ config STACKSIZE
 	
 config HEAPSIZE
 	int 
-	default 12352
+	default 12480
 	
 config ALING
 	int

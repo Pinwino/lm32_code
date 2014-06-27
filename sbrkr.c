@@ -9,7 +9,8 @@
 extern unsigned int _HEAP_START;
 extern unsigned int _HEAP_END;
 extern unsigned int aling;
-
+extern unsigned int _endram;
+extern unsigned int _fstack;
 static caddr_t heap = NULL;
 
 
@@ -19,15 +20,8 @@ caddr_t _sbrk ( int increment ) {
     caddr_t prevHeap;
     caddr_t nextHeap;
     
-   // unsigned int  _HEAP_START;
-	//unsigned int  _HEAP_END;
-
-	//_HEAP_START = *_heap_start;// 0x00045628;
-	//_HEAP_END = *_heap_end;  //0x00045628 + 0x000800;
-    
     if (heap == NULL) {
         // first allocation
-        pp_printf("first allocation\n");
         heap = (caddr_t)&_HEAP_START;
     }
 
@@ -38,7 +32,9 @@ caddr_t _sbrk ( int increment ) {
 	nextHeap = (caddr_t)((unsigned int)(heap + increment));
     // get current stack pointer 
     register caddr_t stackPtr asm ("sp");
-    pp_printf("_HEAP_START=0x%08x, _HEAP_END=0x%08x, stackPtr=0x%08x, nextHeap=0x%08x, prevHeap=0x%08x, increment=%d\n", &_HEAP_START, &_HEAP_END, stackPtr, nextHeap, prevHeap, increment);
+    /*pp_printf("_HEAP_START=0x%08x, _HEAP_END=0x%08x, stackPtr=0x%08x\n", &_HEAP_START, &_HEAP_END, stackPtr);
+    pp_printf("nextHeap=0x%08x, prevHeap=0x%08x, increment=%d\n", nextHeap, prevHeap, increment);
+    pp_printf("_endram=0x%08x, _fstack= 0x%08x\n", &_endram, &_fstack);*/
     
     // Check enough space and there is no collision with stack coming the other way
     // if stack is above start of heap

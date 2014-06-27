@@ -1,0 +1,2 @@
+fmc_fdelay_pulse pepe
+fmc_fdelay_pulse -i 8 -v
